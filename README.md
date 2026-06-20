@@ -1,293 +1,165 @@
-# PharmaFEFO - Application de Gestion Intelligente des Stocks Pharmaceutiques
+# PharmaFEFO — Système de Gestion de Stock Pharmaceutique
 
-Projet éducatif PHP OOP permettant la gestion des stocks de médicaments selon la méthode **FEFO (First Expired, First Out)** afin de réduire les pertes financières liées aux produits périmés et garantir la sécurité sanitaire.
+PharmaFEFO est une application web qui aide une pharmacie à gérer son stock de médicaments en respectant la règle **FEFO** (First Expired, First Out) : le produit qui expire en premier doit toujours sortir en premier.
 
-## Stack Technique
+---
 
-* **PHP 8** (Programmation Orientée Objet)
-* **MySQL** (Base de données)
-* **PDO** (Connexion sécurisée)
-* **Tailwind CSS** (Interface utilisateur via CDN)
-* **PHP Sessions** (Authentification)
-* **Architecture MVC**
+## 🧩 C'est quoi le projet ?
 
-## Structure du Projet
+L'application permet de :
 
-```text
-pharmafefo/
-├── config/
-│   ├── database.php
-├── docs/
-│   ├── shema.sql            # structure de data base
-├── public/
-│   ├── css/                  # Feuilles de style
-│   ├── js/                   # Scripts JavaScript
-│   └── index.php             # Contrôleur frontal / Routing
+- Voir tous les lots de médicaments en stock (avec leur date de péremption)
+- Ajouter un nouveau lot quand on reçoit des produits
+- Sortir automatiquement le bon lot (celui qui expire le plus tôt) quand on délivre un médicament
+- Recevoir des alertes quand un lot est proche de la péremption
+- Gérer les comptes des employés (admin uniquement)
+- Voir un rapport financier des pertes (produits périmés)
+
+---
+
+## ⚙️ Comment ça fonctionne (en simple)
+
+Le projet est découpé en deux parties qui communiquent ensemble :
+
+```
+Le Navigateur (HTML + JavaScript)
+        ⬇️  envoie une requête
+Le Serveur PHP (API qui répond en JSON)
+        ⬇️  va chercher les données
+La Base de Données (MySQL)
+```
+
+Concrètement :
+1. Tu ouvres une page (par exemple le tableau de bord)
+2. La page est juste un squelette HTML vide au départ
+3. Le JavaScript va chercher les données auprès du serveur (via `fetch`)
+4. Le serveur répond avec du JSON (texte structuré)
+5. Le JavaScript affiche les données à l'écran
+
+C'est pour ça qu'on dit que l'architecture est **"API-Ready"** : le serveur ne renvoie jamais directement du HTML avec les données dedans, il renvoie seulement du JSON, et c'est le JavaScript qui construit la page.
+
+---
+
+## 📁 Structure des dossiers
+
+```
+pharmafefo_p2/
+│
+├── config/                  → Réglages (connexion base de données, etc.)
+│
+├── public/                  → Tout ce qui est accessible depuis le navigateur
+│   ├── index.php             → Point d'entrée unique du site
+│   └── js/                   → Fichiers JavaScript (app.js, dashboard.js, login.js)
+│
 ├── src/
 │   ├── Controller/
-│   │   ├── AuthController.php
-│   │   ├── DashboardController.php
-│   │   ├── StockController.php
-│ 
-│   ├── Entity/
-│   │   ├── User.php
-│   │   ├── Produit.php
-│   │   ├── StockBatch.php
-│   │   ├── ReturnProduct.php
-│   │   └── StockMovement.php
-│   │   └── Alert.php
-│   ├── Enum/
-│   │   └── MouvementType.php
-│   ├── Middleware/
-│   │   └── AuthMiddleware.php
-│   └── Repository/
-│       ├── UserRepository.php
-│       ├── ProductRepository.php
-│       ├── MouvementRepository.php
-│       ├── StockBatchRepository.php
-├── templates/
-│   ├── dashboard/
-│   │   └── add_batch.php
-│   │   └── index.php
-│   │   └── manage_users.php
-│   │   └── notifications.php
-│   │   └── report.php
-│   │   └── sortie.php
-
-│   ├── alerts/
-│   │   ├── index.php
-│   ├── auth/
-│   │   └── login.php
-│   └── layout/
-│       ├── base.php
-│       └── layout_header.php
-└── README.md
+│   │   ├── Api/               → Contrôleurs qui répondent en JSON
+│   │   └── Web/                → Contrôleurs qui affichent les pages HTML
+│   ├── Service/                → La logique métier (calcul FEFO, alertes, etc.)
+│   └── Repository/             → Tout ce qui parle à la base de données (SQL)
+│
+└── templates/                  → Les fichiers HTML (squelettes, sans données)
+    ├── auth/                    → Page de connexion
+    ├── dashboard/                → Pages principales
+    └── layout/                   → Le cadre commun (menu, header, footer)
 ```
 
-## Diagramme de Classe
-
-![class-phr.png](class-phr.png)
-## Diagramme de Cas d’Utilisation
-
-![use case pharmacie.jpg](<use case pharmacie.jpg>)
-
-## Diagramme ERD
-
-![ pharmacie.png](<ERD pharmacie.png>)
----
-
-## Contexte du Projet
-
-Les pharmacies et dépôts médicaux gèrent quotidiennement des milliers de références de médicaments.
-
-Le principal problème réside dans la gestion des dates de péremption. Une mauvaise visibilité des lots entraîne :
-
-* Des pertes financières importantes dues aux produits périmés.
-* Des risques sanitaires liés à l'utilisation de médicaments expirés.
-* Des ruptures de stock causées par une mauvaise anticipation.
-
-L'application **PharmaFEFO** apporte une solution grâce à la méthode **FEFO (First Expired, First Out)**.
-
-Le système :
-
-* Priorise automatiquement les lots proches de la péremption.
-* Génère des alertes visuelles selon le niveau de criticité.
-* Facilite le retour fournisseur avant expiration.
-* Réduit les pertes et améliore la sécurité des patients.
+**Règle simple à retenir :** chaque dossier a un seul rôle.
+- `templates/` = juste du HTML
+- `src/Repository/` = juste du SQL
+- `src/Service/` = les calculs et règles métier
+- `src/Controller/` = fait le lien entre tout ça
+- `public/js/` = va chercher les données et les affiche
 
 ---
 
-## Installation
+## 🔑 Les rôles des utilisateurs
 
-### 1. Prérequis
-
-* PHP 8.0 ou supérieur
-* MySQL 5.7 ou supérieur
-* Apache / Nginx ou serveur PHP intégré
-
-### 2. Base de Données
-
-```bash
-mysql -u root -p < database.sql
-```
-
-
-
-### 4. Lancer le Serveur
-
-```bash
-cd public
-php -S localhost:8000
-```
-
-Accéder à l'application :
-
-```text
-http://localhost:8000
-```
+| Rôle | Ce qu'il peut faire |
+|---|---|
+| **Préparateur** | Ajouter des lots, délivrer des médicaments |
+| **Pharmacien** | Délivrer des médicaments, voir les alertes |
+| **Admin** | Tout faire + gérer les comptes + voir le rapport financier |
 
 ---
 
-## Comptes de Démonstration
+## 🚀 Comment lancer le projet
 
-| Rôle           | Email                                                         | Mot de passe |
-| -------------- | ------------------------------------------------------------- | ------------ |
-| Administrateur | [admin@pharmafefo.com](mailto:admin@pharma.com)           | admin123     |
-| Pharmacien     | [pharmacien@pharmafefo.com](mailto:pharmacien@pharma.com) | pharma123    |
-| Gestionnaire   | [stock@pharmafefo.com](mailto:stock@pharma.com)           | stock123     |
+### Ce qu'il te faut avant de commencer
+- Un serveur avec PHP (par exemple **XAMPP**, **WAMP** ou **MAMP**)
+- MySQL (généralement inclus avec XAMPP/WAMP)
 
----
+### Étapes
 
-## Rôles et Permissions
+1. **Copier le projet** dans le dossier de ton serveur web
+   - Avec XAMPP par exemple : `htdocs/pharmafefo_p2`
 
-### Gestionnaire de Stock
+2. **Créer la base de données**
+   - Ouvre phpMyAdmin
+   - Crée une base appelée `pharmafefo_db`
+   - Importe les tables nécessaires (utilisateurs, produits, lots, mouvements)
 
-* Réceptionner les commandes.
-* Enregistrer les entrées de stock.
-* Scanner les lots.
-* Effectuer les sorties de stock.
+3. **Vérifier la connexion**
+   - Ouvre le fichier `config/database.php`
+   - Vérifie que le nom de la base, l'utilisateur et le mot de passe correspondent à ta config MySQL (par défaut : utilisateur `root`, pas de mot de passe)
 
-### Pharmacien
+4. **Démarrer Apache et MySQL** (depuis le panneau XAMPP/WAMP)
 
-* Consulter les alertes de péremption.
-* Valider les inventaires.
-* Gérer les retours fournisseurs.
-* Déclarer les produits périmés.
+5. **Ouvrir le site dans ton navigateur**
+   ```
+   http://localhost/pharmafefo_p2/public/index.php
+   ```
 
-### Administrateur
-
-* Gérer les utilisateurs.
-* Configurer les seuils d'alerte.
-* Consulter les rapports financiers.
-* Administrer la plateforme.
+6. **Se connecter** avec un compte existant dans la table `users`
 
 ---
 
-## Fonctionnalités
+## 🔌 Les routes principales de l'API
 
-### Gestion des Entrées
+Toutes les routes API commencent par `?action=api/v1/...` et renvoient du JSON.
 
-* Ajout de nouveaux médicaments.
-* Enregistrement du numéro de lot.
-* Enregistrement de la date de péremption.
-* Validation automatique des dates.
-
-### Alertes de Péremption
-
-* Vert : Plus de 6 mois.
-* Orange : Moins de 90 jours.
-* Rouge : Moins de 30 jours.
-
-### Gestion FEFO
-
-* Sélection automatique du lot à sortir.
-* Priorité au lot ayant la date de péremption la plus proche.
-* Réduction automatique du stock.
-
-### Gestion des Produits Périmés
-
-* Déclaration des lots expirés.
-* Retrait du stock disponible.
-* Historique des destructions.
-
-### Rapports
-
-* Rapport mensuel des pertes.
-* Valeur financière des produits périmés.
-* Statistiques des retours fournisseurs.
+| Quoi | Méthode | Route |
+|---|---|---|
+| Se connecter | POST | `api/v1/login` |
+| Voir mon profil | GET | `api/v1/me` |
+| Liste des lots | GET | `api/v1/batches` |
+| Ajouter un lot | POST | `api/v1/batches` |
+| Délivrer 1 boîte | POST | `api/v1/batches/checkout` |
+| Marquer un lot périmé | PATCH | `api/v1/batches/{id}/expire` |
+| Liste des produits | GET | `api/v1/products` |
+| Liste des utilisateurs | GET | `api/v1/users` |
+| Créer un utilisateur | POST | `api/v1/users` |
+| Rapport des pertes | GET | `api/v1/report/loss` |
 
 ---
 
-## Architecture
+## 🐛 Problèmes fréquents et solutions
 
-### Entités Principales
+**"Erreur lors du chargement des lots"**
+→ Vérifie que MySQL est bien démarré et que la base de données existe.
 
-#### Utilisateur
+**Page blanche ou erreur 500**
+→ Regarde les logs d'erreur PHP (souvent dans le dossier `logs` de XAMPP), une erreur de syntaxe ou de connexion BDD en est souvent la cause.
 
-* id
-* nom
-* email
-* motDePasse
-* role
+**Erreur 403 "Accès refusé"**
+→ Le compte connecté n'a pas le bon rôle pour cette action (exemple : un préparateur ne peut pas créer d'utilisateurs).
 
-#### Produit
+**Erreur 404 sur une API**
+→ Vérifie l'URL appelée dans le fichier JavaScript concerné — un caractère en trop (comme un `?` en double) suffit à casser la route.
 
-* id
-* nom
-* codeProduit
-* description
+---
+## 🐛 lien de deploiyment
+https://pharmafefo-part-2-production.up.railway.app/
+## 📝 Bon à savoir
 
-#### Lot
-
-* id
-* numeroLot
-* quantite
-* datePeremption
-* statut
-
-#### MouvementStock
-
-* id
-* type (ENTREE / SORTIE)
-* quantite
-* dateMouvement
+- Aucune donnée n'est codée en dur dans les pages HTML : tout vient de la base de données via l'API.
+- Le design (couleurs, mise en page) reste identique partout, seule la façon de charger les données a changé.
+- Si tu veux ajouter une nouvelle fonctionnalité, le bon ordre est généralement :
+  1. Ajouter la requête SQL dans un `Repository`
+  2. Ajouter la logique dans un `Service`
+  3. Créer la route dans un `Controller Api`
+  4. Appeler cette route depuis le JavaScript
 
 ---
 
-## Relations
-
-* Un Produit possède plusieurs Lots.
-* Un Lot appartient à un seul Produit.
-* Un Produit possède plusieurs Mouvements de Stock.
-* Un Utilisateur effectue plusieurs opérations.
-* Un Lot peut être marqué comme Expiré.
-
----
-
-## Règles SQL
-
-* Toutes les requêtes SQL sont dans les Repository.
-* Aucun SQL dans les Controllers.
-* Aucun SQL dans les Views.
-* Les Entités représentent uniquement les objets métier.
-
----
-
-## Sécurité
-
-* Authentification par session PHP.
-* Hashage des mots de passe avec bcrypt.
-* Requêtes préparées PDO.
-* Protection contre les injections SQL.
-* Protection XSS avec `htmlspecialchars()`.
-* Contrôle d'accès basé sur les rôles.
-
----
-
-## Principes SOLID Respectés
-
-### SRP (Single Responsibility Principle)
-
-Chaque classe possède une seule responsabilité.
-
-### OCP (Open Closed Principle)
-
-Le système est extensible sans modification du code existant.
-
-### LSP (Liskov Substitution Principle)
-
-Les classes enfants peuvent remplacer leurs classes parentes.
-
-### ISP (Interface Segregation Principle)
-
-Interfaces spécialisées selon les besoins.
-
-### DIP (Dependency Inversion Principle)
-
-Dépendance vers des abstractions plutôt que des implémentations.
-
----
-
-## Auteur
-
-Projet réalisé dans le cadre de la formation Développeur Web & Web Mobile - Simplon.
+*Projet réalisé dans le cadre d'un exercice d'architecture MVC + API REST en PHP.*
