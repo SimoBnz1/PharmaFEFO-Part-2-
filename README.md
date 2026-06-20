@@ -148,8 +148,9 @@ Toutes les routes API commencent par `?action=api/v1/...` et renvoient du JSON.
 → Vérifie l'URL appelée dans le fichier JavaScript concerné — un caractère en trop (comme un `?` en double) suffit à casser la route.
 
 ---
-## 🐛 lien de deploiyment
-https://pharmafefo-part-2-production.up.railway.app/
+## 🐛 Lien de déploiement
+
+🔗 [Accéder à l'application](https://pharmafefo-part-2-production.up.railway.app/)
 ## 📝 Bon à savoir
 
 - Aucune donnée n'est codée en dur dans les pages HTML : tout vient de la base de données via l'API.
