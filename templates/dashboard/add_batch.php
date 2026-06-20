@@ -38,19 +38,13 @@
         </div>
     <?php endif; ?>
 
-    <form method="POST" action="index.php?action=add-batch" class="space-y-5 relative z-10">
+    <form method="POST" id="FormAddBatch" action="index.php?action=add-batch" class="space-y-5 relative z-10">
         
         <div class="space-y-1.5">
             <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700">Médicament Réceptionné :</label>
             <div class="relative">
-                <select name="produit_id" class="w-full p-3.5 border border-slate-200 rounded-xl bg-slate-50/50 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all appearance-none cursor-pointer" required>
-                    <option value="" class="text-slate-400 font-medium">-- Choisir un produit de la base --</option>
-                    <?php foreach ($products as $p): ?>
-                        <option value="<?= $p['id'] ?>" class="text-slate-900 font-bold">
-                            <?= htmlspecialchars($p['nom']) ?> (Ref: <?= htmlspecialchars($p['reference']) ?>)
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                
+                <input type="text" name="" id="produit_id">
                 <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400 text-xs">
                     
                 </div>
@@ -60,18 +54,18 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1.5">
                 <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700">Numéro de Lot (Batch) :</label>
-                <input type="text" name="numero_lot" placeholder="Ex: LOT-2026-AUGM" class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-800 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all" required>
+                <input type="text" name="numero_lot" id="numero_lot" placeholder="Ex: LOT-2026-AUGM" class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-800 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all" required>
             </div>
 
             <div class="space-y-1.5">
                 <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700">Quantité (Boîtes) :</label>
-                <input type="number" name="quantite" min="1" placeholder="Ex: 100" class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-black text-slate-900 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all" required>
+                <input type="number" name="quantite" id="quantite" min="1" placeholder="Ex: 100" class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-black text-slate-900 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all" required>
             </div>
         </div>
 
         <div class="space-y-1.5">
             <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700">Date de Péremption (DLU) :</label>
-            <input type="date" name="date_peremption" class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-mono font-black text-slate-900 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all" required>
+            <input type="date" name="date_peremption" id="date_peremption" class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-mono font-black text-slate-900 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all" required>
             <span class="text-[10px] text-slate-400 font-medium block mt-1 flex items-center gap-1">
                  Le système validera uniquement si la date est supérieure ou égale à aujourd'hui.
             </span>

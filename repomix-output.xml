@@ -1,0 +1,2099 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+class-phr.png
+config/database.php
+config/envirenment.php
+ERD pharmacie.png
+public/css/style.css
+public/index.php
+public/js/dashboard.js
+README.md
+src/Controller/api/ApiDashboardController.php
+src/Controller/api/ApiStockController.php
+src/Controller/web/AuthController.php
+src/Controller/web/DashboardController.php
+src/Controller/web/StockController.php
+src/Entity/Product.php
+src/Entity/StockBatch.php
+src/Entity/User.php
+src/Enum/BatchStatus.php
+src/Enum/MouvementType.php
+src/Repository/MouvementRepository.php
+src/Repository/ProductRepository.php
+src/Repository/reppotRepository.php
+src/Repository/StockBatchRepository.php
+src/Repository/UserRepository.php
+structure.sql
+templates/auth/login.php
+templates/dashboard/add_batch.php
+templates/dashboard/index.php
+templates/dashboard/manage_users.php
+templates/dashboard/notifications.php
+templates/dashboard/report.php
+templates/dashboard/sortie.php
+templates/layout_footer.php
+templates/layout_header.php
+templates/layout/base.php
+use case pharmacie.jpg
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".gitignore">
+.envirenment
+</file>
+
+<file path="config/envirenment.php">
+DB_HOST=localhost
+DB_NAME=pharmafefo_db
+DB_USER=root
+DB_PASS=
+ENV=development
+</file>
+
+<file path="public/js/dashboard.js">
+// public/js/dashboard.js
+
+// جلب البيانات فور تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboardLots();
+});
+
+function loadDashboardLots(filter = '') {
+    const tbody = document.getElementById('api-stock-table-body');
+    if (!tbody) return; 
+
+    let url = 'index.php?action=api-lots';
+    if (filter) url += `&filter=${filter}`;
+
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">Chargement des données...</td></tr>`;
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error("HTTP error " + response.status);
+            return response.json();
+        })
+        .then(lots => {
+            tbody.innerHTML = ''; 
+
+            if (!lots || lots.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">Aucun lot disponible.</td></tr>`;
+                return;
+            }
+
+            lots.forEach(lot => {
+                const tr = document.createElement('tr');
+                tr.id = `lot-row-${lot.id}`;
+                tr.className = "hover:bg-slate-50/50 transition-colors";
+                
+                tr.innerHTML = `
+                    <td class="py-4 px-6 font-bold text-slate-900">${lot.nom}</td>
+                    <td class="py-4 px-4 text-slate-500 font-mono text-xs">${lot.reference}</td>
+                    <td class="py-4 px-4 text-slate-700 font-semibold">${lot.numero_lot}</td>
+                    <td class="py-4 px-4 font-black text-slate-900 qty-field">${lot.quantite} boîtes</td>
+                    <td class="py-4 px-4 font-mono text-xs text-slate-600">${lot.date_peremption}</td>
+                    <td class="py-4 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${lot.color_classes}">
+                            ${lot.badge_text}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                        <button onclick="dispenseBox(${lot.id})" 
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-all dispense-btn"
+                                ${lot.quantite <= 0 ? 'disabled style="opacity:0.5;"' : ''}>
+                            Délivrer 1 bte
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            console.error("Fetch Error:", error);
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-rose-600 font-bold">Erreur de chargement des données.</td></tr>`;
+        });
+}
+
+function dispenseBox(lotId) {
+    const row = document.getElementById(`lot-row-${lotId}`);
+    const qtyField = row.querySelector('.qty-field');
+    const button = row.querySelector('.dispense-btn');
+
+    fetch('index.php?action=api-dispense', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: lotId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            qtyField.textContent = `${data.new_qty} boîtes`;
+            if (data.new_qty <= 0) {
+                row.style.opacity = '0.4';
+                button.disabled = true;
+                button.textContent = "Épuisé";
+            }
+        } else {
+            alert(data.message || "Erreur lors de l'opération");
+        }
+    })
+    .catch(error => alert("Erreur de connexion avec le serveur"));
+}
+</file>
+
+<file path="src/Controller/api/ApiDashboardController.php">
+
+</file>
+
+<file path="src/Controller/api/ApiStockController.php">
+<?php
+// src/Controller/api/ApiStockController.php
+
+require_once __DIR__ . '/../../Repository/StockBatchRepository.php';
+require_once __DIR__ . '/../../Repository/MouvementRepository.php';
+require_once __DIR__ . '/../../Repository/ProductRepository.php';
+
+class ApiStockController {
+    private StockBatchRepository $repo;
+    private MouvementRepository $mouvementRepo;
+    private ProductRepository $productRepo;
+
+    public function __construct() {
+        $this->repo = new StockBatchRepository();
+        $this->mouvementRepo = new MouvementRepository();
+        $this->productRepo = new ProductRepository();
+    }
+
+    public function apiGetLots() {
+        $filter = $_GET['filter'] ?? null;
+        $lots = $this->repo->getDashboardLots($filter);
+        
+        $processed = [];
+        $today = new DateTime();
+
+        foreach ($lots as $l) {
+            $dlu = new DateTime($l['date_peremption']);
+            $diff = $today->diff($dlu);
+            $jours = $diff->days * ($diff->invert ? -1 : 1);
+
+            // تحديد شكل الألوان بدقة بحال الـ CSS الأصلي
+            if ($l['quantite'] <= 0) {
+                $l['color_classes'] = 'crit-rouge';
+                $l['badge_text'] = 'Épuisé';
+            } elseif ($jours < 0) {
+                $l['color_classes'] = 'crit-rouge';
+                $l['badge_text'] = 'EXPIRED';
+            } elseif ($jours < 30) {
+                $l['color_classes'] = 'crit-rouge';
+                $l['badge_text'] = 'Rouge (< 30 j)';
+            } elseif ($jours < 90) {
+                $l['color_classes'] = 'crit-orange';
+                $l['badge_text'] = 'Orange (< 90 j)';
+            } else {
+                $l['color_classes'] = 'crit-vert';
+                $l['badge_text'] = 'Vert (> 6 mois)';
+            }
+            $processed[] = $l;
+        }
+
+        echo json_encode($processed);
+        exit;
+    }
+
+    public function apiDispense() {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $id = $input['id'] ?? null;
+
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'ID manquant']);
+            exit;
+        }
+
+        $lot = $this->repo->find($id); 
+        if ($lot && $lot['quantite'] > 0) {
+            $newQty = $lot['quantite'] - 1;
+            $this->repo->updateQuantite($id, $newQty);
+            $this->mouvementRepo->logMouvement($id, 'SORTIE', 1);
+            echo json_encode(['success' => true, 'new_qty' => $newQty]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Stock épuisé ou introuvable']);
+        }
+        exit;
+    }
+}
+</file>
+
+<file path="src/Controller/web/AuthController.php">
+<?php
+// src/Controller/web/AuthController.php
+
+require_once __DIR__ . '/../../Repository/UserRepository.php'; 
+
+class AuthController {
+    private UserRepository $userRepo; 
+
+    public function __construct() {
+        $this->userRepo = new UserRepository(); 
+    }
+
+    public function login() {
+        $error = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $email = trim($_POST['email']);
+            $password = $_POST['password'];
+
+            $user = $this->userRepo->findUserByEmail($email); 
+
+            if ($user && $password === $user['password']) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_nom'] = $user['nom'] . ' ' . $user['prenom'];
+                $_SESSION['user_role'] = $user['role'];
+
+                header("Location: index.php?action=dashboard");
+                exit;
+            } else {
+                $error = "Email ou mot de passe incorrect !";
+            }
+        }
+
+        include __DIR__ . '/../../templates/auth/login.php';
+    }
+
+
+
+
+  
+
+    public function logout() {
+        session_destroy();
+        header("Location: index.php?action=login");
+        exit;
+    }
+}
+</file>
+
+<file path="src/Controller/web/DashboardController.php">
+<?php
+// src/Controller/web/DashboardController.php
+
+class DashboardController {
+    public function index() {
+        ob_start();
+        include __DIR__ . '/../../../templates/dashboard/index.php';
+        $content = ob_get_clean();
+        include __DIR__ . '/../../../templates/layout/base.php';
+    }
+}
+</file>
+
+<file path="src/Controller/web/StockController.php">
+<?php
+// src/Controller/web/StockController.php
+
+require_once __DIR__ . '/../../Repository/StockBatchRepository.php';
+
+class StockController {
+    private StockBatchRepository $repo;
+
+    public function __construct() {
+        $this->repo = new StockBatchRepository();
+    }
+
+    public function addBatch() {
+        $error = null;
+        $success = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $productId = (int)$_POST['produit_id'];
+            $lotNumber = trim($_POST['numero_lot']);
+            $quantity = (int)$_POST['quantite'];
+            $expiryDateStr = $_POST['date_peremption'];
+
+            if (empty($expiryDateStr)) {
+                $error = "Erreur : La date de péremption ne peut pas être vide !";
+            } else {
+                $expiryDate = new DateTime($expiryDateStr);
+                $today = new DateTime((new DateTime())->format('Y-m-d')); 
+
+                if ($expiryDate < $today) {
+                    $error = "La date de péremption est antérieure à la date du jour ! Saisie rejetée.";
+                } else {
+                    $result = $this->repo->saveInputBatch($productId, $lotNumber, $quantity, $expiryDateStr);
+                    if ($result) {
+                        $success = "Succès : Le lot a été classé précisément dans la file d'attente FEFO !";
+                    } else {
+                        $error = "Une erreur est survenue lors de l'enregistrement.";
+                    }
+                }
+            }
+        }
+
+        $products = $this->repo->getAllProducts();
+
+        ob_start();
+        include __DIR__ . '/../../../templates/dashboard/add_batch.php'; 
+        $content = ob_get_clean();
+
+        include __DIR__ . '/../../../templates/layout/base.php';
+    }
+
+    public function financialReport() {
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'ADMIN') {
+            header("Location: index.php?action=dashboard");
+            exit;
+        }
+
+        $totalLoss = $this->repo->getFinancialLossTotal();
+
+        ob_start();
+        include __DIR__ . '/../../../templates/dashboard/report.php';
+        $content = ob_get_clean();
+
+        include __DIR__ . '/../../../templates/layout/base.php';
+    }
+}
+</file>
+
+<file path="config/database.php">
+<?php
+// config/database.php
+
+class Database {
+    private static $instance = null;
+
+    
+    public static function getConnection() {
+        if (self::$instance === null) {
+            try {
+                self::$instance = new PDO(
+                    "mysql:host=localhost;dbname=pharmafefo_db;charset=utf8",
+                    "root", 
+                    "",     
+                    [
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                    ]
+                );
+            } catch (PDOException $e) {
+                die("Erreur de connexion base de données : " . $e->getMessage());
+            }
+        }
+        return self::$instance;
+    }
+}
+</file>
+
+<file path="public/css/style.css">
+/* public/css/style.css - Design Unique Glassmorphism Premium Dark Mode */
+:root {
+    --bg-main: #0a0f1d;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.07);
+    --neon-green: #00f2fe;
+    --neon-orange: #f39c12;
+    --neon-red: #ff4757;
+    --text-main: #f1f2f6;
+    --text-muted: #a4b0be;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-image: radial-gradient(circle at 10% 20%, rgba(0, 242, 254, 0.05) 0%, transparent 40%),
+                      radial-gradient(circle at 90% 80%, rgba(255, 71, 87, 0.05) 0%, transparent 40%);
+    background-attachment: fixed;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 15px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 800;
+    background: linear-gradient(45deg, #00f2fe, #4facfe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 600;
+    margin-right: 20px;
+    transition: color 0.3s ease;
+}
+
+nav a:hover, nav a.active {
+    color: var(--neon-green);
+}
+
+/* Table Design */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    margin-top: 15px;
+}
+
+th {
+    color: var(--text-muted);
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 16px;
+}
+
+td {
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid var(--glass-border);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 16px;
+    color: var(--text-main);
+}
+
+td:first-child {
+    border-left: 1px solid var(--glass-border);
+    border-radius: 12px 0 0 12px;
+}
+
+td:last-child {
+    border-right: 1px solid var(--glass-border);
+    border-radius: 0 12px 12px 0;
+}
+
+/* Critical colors indicators with smooth glowing badges */
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.crit-vert { background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); box-shadow: 0 0 10px rgba(46, 204, 113, 0.1); }
+.crit-orange { background: rgba(243, 156, 18, 0.15); color: #f39c12; border: 1px solid rgba(243, 156, 18, 0.3); box-shadow: 0 0 10px rgba(243, 156, 18, 0.1); }
+.crit-rouge { background: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.3); box-shadow: 0 0 10px rgba(231, 76, 60, 0.1); }
+
+/* Forms input custom style */
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; color: var(--text-muted); margin-bottom: 8px; font-size: 14px; }
+.form-control {
+    width: 100%;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 12px;
+    color: white;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--neon-green);
+    box-shadow: 0 0 8px rgba(0, 242, 254, 0.2);
+}
+
+.btn {
+    background: linear-gradient(45deg, #00f2fe, #4facfe);
+    border: none; color: #0a0f1d; font-weight: 700;
+    padding: 12px 24px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 242, 254, 0.4); }
+.btn-danger { background: linear-gradient(45deg, #ff4757, #ff6b81); color: white; }
+.btn-danger:hover { box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4); }
+
+.filter-bar { display: flex; gap: 15px; margin-bottom: 20px; align-items: center; }
+.notification-banner { background: rgba(0, 242, 254, 0.08); border-right: 4px solid var(--neon-green); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+
+
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .sidebar-link {
+            position: relative;
+        }
+
+        .sidebar-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 0;
+            background: #3b82f6;
+            border-radius: 0 4px 4px 0;
+            transition: height 0.2s ease;
+        }
+
+        .sidebar-link:hover::before {
+            height: 60%;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .main-content {
+            animation: fadeIn 0.3s ease-out;
+        }
+</file>
+
+<file path="public/index.php">
+<?php
+// public/index.php
+session_start();
+
+// شحن الـ Controllers
+require_once __DIR__ . '/../src/Controller/web/AuthController.php';
+require_once __DIR__ . '/../src/Controller/web/DashboardController.php';
+require_once __DIR__ . '/../src/Controller/web/StockController.php'; 
+require_once __DIR__ . '/../src/Controller/api/ApiStockController.php';
+
+$action = $_GET['action'] ?? 'dashboard';
+$method = $_SERVER['REQUEST_METHOD'];
+
+$authController = new AuthController();
+$dashboardController = new DashboardController();
+$webStockController = new StockController();     
+$apiStockController = new ApiStockController();   
+
+// 1. حماية المسارات
+if (!isset($_SESSION['user_id']) && $action !== 'login') {
+    header("Location: index.php?action=login");
+    exit;
+}
+
+// 2. نظام الـ Routing للـ Web والـ API
+switch ($action) {
+    // 🌐 مسارات الـ Web العادية
+    case 'login':
+        $authController->login();
+        break;
+    case 'logout':
+        $authController->logout();
+        break;
+    case 'dashboard':
+        $dashboardController->index();
+        break;
+    case 'add-batch':
+        $webStockController->addBatch();
+        break;
+
+    // 🚀 مسارات الـ API الجديدة (مضمونة فـ XAMPP)
+    case 'api-lots':
+        header('Content-Type: application/json');
+        $apiStockController->apiGetLots();
+        exit;
+
+    case 'api-dispense':
+        header('Content-Type: application/json');
+        if ($method === 'POST') {
+            $apiStockController->apiDispense();
+        }
+        exit;
+
+    default:
+        $dashboardController->index();
+        break;
+}
+</file>
+
+<file path="src/Entity/Product.php">
+<?php
+// src/Entity/Product.php
+
+class Product {
+    private ?int $id;
+    private string $nom;
+    private string $reference;
+    private float $prix;
+
+    public function __construct(string $nom, string $reference, float $prix, ?int $id = null) {
+        $this->id = $id;
+        $this->nom = $nom;
+        $this->reference = $reference;
+        $this->prix = $prix;
+    }
+
+    public function getId(): ?int { return $this->id; }
+    public function getNom(): string { return $this->nom; }
+    public function getReference(): string { return $this->reference; }
+    public function getPrix(): float { return $this->prix; }
+}
+</file>
+
+<file path="src/Entity/StockBatch.php">
+
+</file>
+
+<file path="src/Entity/User.php">
+<?php
+// src/Entity/User.php
+
+class User {
+    private ?int $id;
+    private string $nom;
+    private string $prenom;
+    private string $email;
+    private string $role;
+
+    public function __construct(?int $id, string $nom, string $prenom, string $email, string $role) {
+        $this->id = $id;
+        $this->nom = $nom;
+        $this->prenom = $prenom;
+        $this->email = $email;
+        $this->role = $role;
+    }
+
+    public function getId(): ?int { return $this->id; }
+    public function getNomComplet(): string { return $this->prenom . ' ' . $this->nom; }
+    public function getEmail(): string { return $this->email; }
+    public function getRole(): string { return $this->role; }
+}
+</file>
+
+<file path="src/Enum/BatchStatus.php">
+
+</file>
+
+<file path="src/Enum/MouvementType.php">
+// src/Enum/MovementType.php
+<?php
+            class MovementType {
+    const ENTREE = 'ENTREE';
+    const SORTIE = 'SORTIE';
+
+    public $value;
+
+    public function __construct(string $value) {
+        $this->value = $value;
+    }
+
+    public static function from(string $value): self {
+        return new self($value);
+    }
+}
+</file>
+
+<file path="src/Repository/MouvementRepository.php">
+<?php
+// src/Repository/MouvementRepository.php
+require_once __DIR__ . '/../../config/database.php';
+
+class MouvementRepository {
+    private PDO $db;
+
+    public function __construct() {
+        $this->db = Database::getConnection();
+    }
+
+    public function logMouvement($lotStockId, $type, $quantite) {
+        $stmt = $this->db->prepare("
+            INSERT INTO mouvements (lot_stock_id, type, quantite) 
+            VALUES (?, ?, ?)
+        ");
+        return $stmt->execute([$lotStockId, $type, $quantite]);
+    }
+}
+</file>
+
+<file path="src/Repository/ProductRepository.php">
+<?php
+// src/Repository/ProductRepository.php
+require_once __DIR__ . '/../../config/database.php';
+
+class ProductRepository {
+    private $db;
+
+    public function __construct() {
+        $this->db = Database::getConnection();
+    }
+
+    public function getAllProducts() {
+        return $this->db->query("SELECT * FROM produits ORDER BY nom ASC")->fetchAll();
+    }
+}
+</file>
+
+<file path="src/Repository/reppotRepository.php">
+
+</file>
+
+<file path="src/Repository/UserRepository.php">
+<?php
+// src/Repository/UserRepository.php
+
+require_once __DIR__ . '/../../config/database.php';
+
+class UserRepository {
+    private PDO $db;
+
+    public function __construct() {
+        $this->db = Database::getConnection();
+    }
+    
+    public function findUserByEmail($email) {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $res = $stmt->fetch();
+        return $res ? $res : null;
+    }
+   
+    public function getAllUsers() {
+        return $this->db->query("SELECT id, nom, prenom, email, role FROM users ORDER BY id DESC")->fetchAll();
+    }
+
+    public function createUser($nom, $prenom, $email, $hashedPassword, $role) {
+        $stmt = $this->db->prepare("
+            INSERT INTO users (nom, prenom, email, password, role) 
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        return $stmt->execute([$nom, $prenom, $email, $hashedPassword, $role]);
+    }
+}
+</file>
+
+<file path="structure.sql">
+CREATE DATABASE IF NOT EXISTS pharmafefo_db ;
+USE pharmafefo_db;
+
+-- 1. جدول المستخدمين
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    prenom VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'pharmacien', 'preparateur') NOT NULL
+) ;
+
+-- 2. جدول المنتجات
+CREATE TABLE produits (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(150) NOT NULL,
+    reference VARCHAR(100) UNIQUE NOT NULL,
+    prix DECIMAL(10, 2) NOT NULL
+) ;
+
+-- 3. جدول الشحنات (الـ Lots)
+CREATE TABLE lot_stocks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    produit_id INT NOT NULL,
+    numero_lot VARCHAR(100) NOT NULL,
+    quantite INT NOT NULL,
+    date_peremption DATE NOT NULL,
+    statut ENUM('OK', 'WARNING', 'CRITICAL', 'EXPIRED') DEFAULT 'OK',
+    CONSTRAINT FK_lot_produit FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE CASCADE
+) ;
+
+-- 4. جدول حركات المخزون
+CREATE TABLE mouvements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    lot_stock_id INT NOT NULL,
+    type ENUM('ENTREE', 'SORTIE') NOT NULL,
+    quantite INT NOT NULL,
+    date_mouvement DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_mouvement_lot FOREIGN KEY (lot_stock_id) REFERENCES lot_stocks(id) ON DELETE CASCADE
+) ;
+
+-- 5. جدول التنبيهات
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    lot_stock_id INT NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    date_notification DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_read BOOLEAN DEFAULT FALSE,
+    CONSTRAINT FK_notification_lot FOREIGN KEY (lot_stock_id) REFERENCES lot_stocks(id) ON DELETE CASCADE
+);
+
+-- 6. جدول التقارير المخصصة للأدمن
+CREATE TABLE rapports_perte (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    date_rapport DATETIME DEFAULT CURRENT_TIMESTAMP,
+    total_perte DECIMAL(10, 2) NOT NULL,
+    details TEXT,
+    CONSTRAINT FK_rapport_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
+) ;
+
+
+
+
+-- البريد: admin@pharma.com | الكود: admin123
+INSERT INTO users (nom, prenom, email, password, role) 
+VALUES ('Alami', 'Ahmed', 'admin@pharma.com', 'admin123', 'admin');
+
+-- البريد: pharmacien@pharma.com | الكود: pharma123
+INSERT INTO users (nom, prenom, email, password, role) 
+VALUES ('Benjelloun', 'Sanaa', 'pharmacien@pharma.com', 'pharma123', 'pharmacien');
+
+-- البريد: prep@pharma.com | الكود: prep123
+INSERT INTO users (nom, prenom, email, password, role) 
+VALUES ('Karimi', 'Amine', 'prep@pharma.com', 'prep123', 'preparateur');
+
+
+INSERT INTO produits (nom, reference, prix) VALUES ('Doliprane 1000mg', 'REF-DOL100', 15.50);
+INSERT INTO produits (nom, reference, prix) VALUES ('Augmentin 1g', 'REF-AUG200', 78.40);
+INSERT INTO produits (nom, reference, prix) VALUES ('Spasfon', 'REF-SPA300', 25.00);
+INSERT INTO produits (nom, reference, prix) VALUES ('Maxilase', 'REF-MAX400', 32.20);
+INSERT INTO produits (nom, reference, prix) VALUES ('Voltarene 50mg', 'REF-VOL500', 28.10);
+
+
+-- 1. شحنة آمنة (صلاحية بعيدة - غاتبان بالخضر)
+INSERT INTO lot_stocks (produit_id, numero_lot, quantite, date_peremption) 
+VALUES (1, 'LOT-DOL-001', 150, '2027-12-31');
+
+-- 2. شحنة قربات تسالي (أقل من 90 يوم - غاتبان بالليموني/البرتقالي)
+INSERT INTO lot_stocks (produit_id, numero_lot, quantite, date_peremption) 
+VALUES (1, 'LOT-DOL-002', 45, DATE_ADD(CURDATE(), INTERVAL 45 DAY));
+
+-- 3. شحنة خطيرة جداً (أقل من 30 يوم - غاتبان بالأحمر)
+INSERT INTO lot_stocks (produit_id, numero_lot, quantite, date_peremption) 
+VALUES (2, 'LOT-AUG-001', 20, DATE_ADD(CURDATE(), INTERVAL 12 DAY));
+
+-- 4. شحنة منتهية الصلاحية (تاريخ قديم - غاتبان بالأحمر ومكتوب فيها منتهي)
+INSERT INTO lot_stocks (produit_id, numero_lot, quantite, date_peremption) 
+VALUES (3, 'LOT-SPA-OLD', 10, '2025-01-01');
+
+-- 5. شحنة أخرى جديدة للـ Voltarenes (آمنة - غاتبان بالخضر)
+</file>
+
+<file path="templates/auth/login.php">
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion - PharmaFEFO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center font-sans">
+
+<div class="max-w-md w-full bg-white p-8 rounded-xl shadow-md border border-gray-200">
+    <div class="text-center mb-6">
+        <span class="text-4xl">💊</span>
+        <h2 class="text-2xl font-black text-gray-950 mt-2">Pharma<span class="text-indigo-600">FEFO</span></h2>
+        <p class="text-xs text-gray-400 mt-1">Gestion Sécurisée des Stocks Virtuels</p>
+    </div>
+
+    <?php if (!empty($error)): ?>
+        <div class="mb-4 p-3 bg-red-50 border-l-4 border-red-600 text-red-900 text-xs font-bold rounded">
+             <?= htmlspecialchars($error) ?>
+        </div>
+    <?php endif; ?>
+
+    <form method="POST" action="index.php?action=login" class="space-y-4">
+        <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Email Professionnel :</label>
+            <input type="email" name="email" placeholder="Ex: admin@pharma.com" class="w-full p-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" required>
+        </div>
+        <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Mot de Passe :</label>
+            <input type="password" name="password" placeholder="••••••••" class="w-full p-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" required>
+        </div>
+        <button type="submit" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold p-3 rounded-lg text-sm transition-all uppercase tracking-wider">
+            Se Connecter
+        </button>
+    </form>
+</div>
+
+</body>
+</html>
+</file>
+
+<file path="templates/dashboard/add_batch.php">
+<?php
+/** @var array $products Zid had l-khit bch intelephense yfhamha direct */
+?>
+<div class="max-w-2xl mx-auto bg-gradient-to-br from-white to-slate-50/60 p-8 rounded-3xl border border-slate-200/80 shadow-md relative overflow-hidden animate-fade-in">
+    
+    <div class="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="mb-8 border-b border-slate-100 pb-5 relative z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl text-emerald-600 shadow-2xs">
+                
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-slate-900 tracking-tight">
+                    Réception & Entrées Intelligentes
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5 font-medium">
+                    Espace Opérationnel — Saisie sécurisée des lots et synchronisation du moteur <span class="text-emerald-600 font-bold">FEFO</span>
+                </p>
+            </div>
+        </div>
+        
+        <div class="mt-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-wider border border-slate-200/40">
+            <span>🛡️</span> Rôle requis : Préparateur / Pharmacien
+        </div>
+    </div>
+
+    <?php if (!empty($error)): ?>
+        <div class="mb-6 p-4 bg-rose-50 border-l-4 border-rose-600 rounded-xl text-rose-900 text-xs font-black flex items-center gap-2.5 shadow-2xs">
+            <span class="text-base"></span> <span><?= htmlspecialchars($error) ?></span>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($success)): ?>
+        <div class="mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-600 rounded-xl text-emerald-900 text-xs font-black flex items-center gap-2.5 shadow-2xs">
+            <span class="text-base"></span> <span><?= htmlspecialchars($success) ?></span>
+        </div>
+    <?php endif; ?>
+
+    <form method="POST" action="index.php?action=add-batch" class="space-y-5 relative z-10">
+        
+        <div class="space-y-1.5">
+            <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700">Médicament Réceptionné :</label>
+            <div class="relative">
+                <select name="produit_id" class="w-full p-3.5 border border-slate-200 rounded-xl bg-slate-50/50 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all appearance-none cursor-pointer" required>
+                    <option value="" class="text-slate-400 font-medium">-- Choisir un produit de la base --</option>
+                    <?php foreach ($products as $p): ?>
+                        <option value="<?= $p['id'] ?>" class="text-slate-900 font-bold">
+                            <?= htmlspecialchars($p['nom']) ?> (Ref: <?= htmlspecialchars($p['reference']) ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400 text-xs">
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+                <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700">Numéro de Lot (Batch) :</label>
+                <input type="text" name="numero_lot" placeholder="Ex: LOT-2026-AUGM" class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-800 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all" required>
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700">Quantité (Boîtes) :</label>
+                <input type="number" name="quantite" min="1" placeholder="Ex: 100" class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-black text-slate-900 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all" required>
+            </div>
+        </div>
+
+        <div class="space-y-1.5">
+            <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700">Date de Péremption (DLU) :</label>
+            <input type="date" name="date_peremption" class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-mono font-black text-slate-900 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all" required>
+            <span class="text-[10px] text-slate-400 font-medium block mt-1 flex items-center gap-1">
+                 Le système validera uniquement si la date est supérieure ou égale à aujourd'hui.
+            </span>
+        </div>
+
+        <div class="pt-2">
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-4 px-6 rounded-xl shadow-md hover:shadow-lg hover:shadow-emerald-600/10 transition-all uppercase tracking-widest active:scale-[0.99] cursor-pointer">
+                Enregistrer 
+            </button>
+        </div>
+
+    </form>
+</div>
+</file>
+
+<file path="templates/dashboard/index.php">
+<div class="space-y-8 animate-fade-in">
+    <div class="bg-gradient-to-br from-white to-slate-50/50 p-6 rounded-3xl border border-slate-200/70 shadow-sm flex justify-between items-center">
+        <div>
+            <h2 class="text-2xl font-black text-slate-900 tracking-tight">Surveillance Globale des Lots (API-Ready)</h2>
+            <p class="text-xs text-slate-500 mt-1">Gestion asynchrone ultra-fluide via JavaScript fetch.</p>
+        </div>
+        
+        <div class="flex gap-2 p-1.5 bg-slate-200/60 rounded-2xl border">
+            <button onclick="loadDashboardLots('')" class="px-4 py-2 bg-white text-slate-900 rounded-xl text-xs font-black shadow-xs">Tous les lots</button>
+            <button onclick="loadDashboardLots('critical')" class="px-4 py-2 text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-black">Alerte Critique (&lt;30j)</button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/30 border-b text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                        <th class="py-4 px-6">Désignation Produit</th>
+                        <th class="py-4 px-4">Référence</th>
+                        <th class="py-4 px-4">N° de Lot</th>
+                        <th class="py-4 px-4">Quantité Physique</th>
+                        <th class="py-4 px-4">DLU (Péremption)</th>
+                        <th class="py-4 px-4">Indicateur Diagnostic</th>
+                        <th class="py-4 px-6 text-right">Actions Restrictives</th>
+                    </tr>
+                </thead>
+                <tbody id="api-stock-table-body" class="text-sm divide-y divide-slate-100">
+                    <tr>
+                        <td colspan="7" class="text-center py-8 text-slate-400 font-medium">Chargement des données en cours...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="<?php echo dirname($_SERVER['SCRIPT_NAME']); ?>/js/dashboard.js"></script>
+</file>
+
+<file path="templates/dashboard/manage_users.php">
+<?php
+/** @var array $usersList */
+/** @var string|null $error */
+/** @var string|null $success */
+?>
+<!-- templates/dashboard/users.php -->
+<div class="space-y-8 animate-fade-in">
+    
+    <!-- HEADER BAR WITH PREMIUM LEVEL BADGE -->
+    <div class="bg-gradient-to-br from-white to-slate-50/50 p-6 rounded-3xl border border-slate-200/70 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-48 h-48 bg-purple-500/5 rounded-full blur-2xl pointer-events-none"></div>
+        
+        <div class="flex items-center gap-3 relative z-10">
+            <div class="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-xl text-purple-600 shadow-2xs">
+                👤
+            </div>
+            <div>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight">
+                    Gestion des Comptes & Équipe
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5 font-medium">Espace Administrateur — Configuration des accès restrictifs et rôles applicatifs</p>
+            </div>
+        </div>
+        
+        <div class="bg-purple-950/5 text-purple-700 border border-purple-200/60 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xs shrink-0 relative z-10">
+            <span class="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span> Mode Admin Strict
+        </div>
+    </div>
+
+    <!-- MAIN TWO-COLUMN BENTO GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        
+        <!-- COLUMN 1: INTERACTIVE FORM CARD -->
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200/80 lg:col-span-1 h-fit lg:sticky lg:top-24 relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-24 h-24 bg-purple-500/5 rounded-full blur-xl pointer-events-none"></div>
+            
+            <div class="mb-6 pb-4 border-b border-slate-100">
+                <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                    Ajouter un Collaborateur
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5 font-medium">Créez un compte sécurisé pour l'équipe</p>
+            </div>
+
+            <!-- Contextual Notifications -->
+            <?php if (!empty($error)): ?>
+                <div class="mb-4 p-4 bg-rose-50 border-l-4 border-rose-600 text-rose-900 text-xs font-black rounded-xl flex items-center gap-2.5 shadow-2xs">
+                    <span></span> <span><?= htmlspecialchars($error) ?></span>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($success)): ?>
+                <div class="mb-4 p-4 bg-emerald-50 border-l-4 border-emerald-600 text-emerald-900 text-xs font-black rounded-xl flex items-center gap-2.5 shadow-2xs">
+                    <span></span> <span><?= htmlspecialchars($success) ?></span>
+                </div>
+            <?php endif; ?>
+
+            <!-- Form Body -->
+            <form method="POST" action="index.php?action=users" class="space-y-4">
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-black uppercase tracking-wider text-slate-700">Nom :</label>
+                        <input type="text" name="nom" placeholder="Nom" 
+                               class="w-full p-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all" required>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-black uppercase tracking-wider text-slate-700">Prénom :</label>
+                        <input type="text" name="prenom" placeholder="Prénom" 
+                               class="w-full p-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all" required>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-700">Email Professionnel :</label>
+                    <input type="email" name="email" placeholder="Ex: sara@pharma.com" 
+                           class="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-800 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all" required>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-700">Mot de passe provisoire :</label>
+                    <input type="password" name="password" placeholder="••••••••" 
+                           class="w-full p-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all" required>
+                    <span class="text-[9px] text-slate-400 font-medium block mt-1 leading-normal"> Le mot de passe sera automatiquement crypté via PASSWORD_BCRYPT.</span>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-700">Rôle & Droits d'accès :</label>
+                    <div class="relative">
+                        <select name="role" class="w-full p-3 border border-slate-200 rounded-xl text-xs font-black bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer appearance-none" required>
+                            <option value="pharmacien"> Pharmacien Titulaire </option>
+                            <option value="preparateur"> Préparateur en Pharmacie </option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 text-[10px]">
+                            ▼
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-3.5 px-4 rounded-xl shadow-md hover:shadow-lg hover:shadow-purple-600/10 transition-all uppercase tracking-widest active:scale-[0.99] cursor-pointer">
+                        Créer l'accès sécurisé
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- COLUMN 2: HIGH-DENSITY DIRECTORY TABLE -->
+        <div class="bg-white p-6 rounded-3xl shadow-xs border border-slate-200/80 lg:col-span-2 overflow-hidden">
+            <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div>
+                    <h3 class="text-base font-black text-slate-900">Utilisateurs Enregistrés</h3>
+                    <p class="text-xs text-slate-400 mt-0.5 font-medium">Visualisation des comptes actifs disposant d'un rôle d'authentification</p>
+                </div>
+                <span class="text-[10px] font-mono font-bold bg-slate-50 text-slate-400 px-2.5 py-1 rounded-lg border border-slate-200/60 shadow-2xs">
+                    Actifs : <?= count($usersList) ?>
+                </span>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-100 shadow-2xs">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/70 border-b border-slate-200/60 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                            <th class="p-4 pl-6">Membre de l'Équipe</th>
+                            <th class="p-4">Identifiant / Email</th>
+                            <th class="p-4 text-center pr-6">Niveau de Privilèges</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-slate-100">
+                        <?php foreach ($usersList as $u): ?>
+                            <tr class="hover:bg-slate-50/40 transition-colors group">
+                                <!-- User Identity Block -->
+                                <td class="p-4 pl-6 flex items-center gap-3">
+                                    <!-- Avatar initials dynamic wrapper -->
+                                    <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-700 border border-purple-200/40 font-black text-xs flex items-center justify-center uppercase shadow-2xs shrink-0 group-hover:bg-purple-600 group-hover:text-white group-hover:border-purple-600 transition-all duration-200">
+                                        <?= mb_substr($u['prenom'], 0, 1) . mb_substr($u['nom'], 0, 1) ?>
+                                    </div>
+                                    <div class="overflow-hidden">
+                                        <div class="font-black text-slate-900 truncate group-hover:text-purple-950 transition-colors"><?= htmlspecialchars($u['nom'] . ' ' . $u['prenom']) ?></div>
+                                        <div class="text-[10px] text-slate-400 font-mono mt-0.5">ID Système : #<?= $u['id'] ?></div>
+                                    </div>
+                                </td>
+                                
+                                <!-- Email Address -->
+                                <td class="p-4 font-mono text-xs text-slate-500 group-hover:text-slate-800 transition-colors whitespace-nowrap">
+                                    <?= htmlspecialchars($u['email']) ?>
+                                </td>
+                                
+                                <!-- Role Badge Controller -->
+                                <td class="p-4 text-center pr-6 whitespace-nowrap">
+                                    <?php if ($u['role'] === 'admin'): ?>
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                                            <span class="w-1 h-1 rounded-full bg-purple-500"></span> Super Admin
+                                        </span>
+                                    <?php elseif ($u['role'] === 'pharmacien'): ?>
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                                            <span class="w-1 h-1 rounded-full bg-amber-500"></span> Pharmacien
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-2xs">
+                                            <span class="w-1 h-1 rounded-full bg-emerald-500"></span> Préparateur
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+</file>
+
+<file path="templates/dashboard/notifications.php">
+<div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-bold text-amber-800 mb-4"> Notifications Système (Gestionnaire d'Anticipation)</h2>
+    <p class="text-gray-600 text-sm mb-4">Lots de médicaments arrivant à péremption le mois prochain :</p>
+
+    <?php if (empty($notifications)): ?>
+        <div class="p-4 bg-green-50 text-green-700 rounded text-center font-bold">
+             Aucun médicament ne va périmer le mois prochain. Bon travail d'anticipation !
+        </div>
+    <?php else: ?>
+        <div class="space-y-3">
+            <?php foreach ($notifications as $n): ?>
+                <div class="p-3 bg-amber-50 border-l-4 border-amber-500 rounded flex justify-between items-center">
+                    <div>
+                        <span class="font-bold text-gray-800"><?= htmlspecialchars($n['produit_nom']) ?></span>
+                        <p class="text-xs text-gray-500">Numéro de Lot: <span class="font-mono"><?= htmlspecialchars($n['numero_lot']) ?></span></p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-bold text-amber-700"><?= $n['date_peremption'] ?></span>
+                        <p class="text-xs text-gray-400">Quantité en stock: <?= $n['quantite'] ?> u</p>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+
+    <div class="mt-6 text-center">
+        <a href="/index.php?action=dashboard" class="text-indigo-600 hover:underline text-sm">← Retour au Dashboard central</a>
+    </div>
+</div>
+</file>
+
+<file path="templates/dashboard/report.php">
+<?php
+/** @var float $totalLoss */
+?>
+<div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-md border border-gray-100 text-center">
+    
+    <div class="mb-6 border-b pb-4">
+        <h2 class="text-xl font-black text-gray-950 flex items-center justify-center gap-2">
+            Rapport Financier Mensuel
+        </h2>
+        <p class="text-xs text-gray-500 mt-1">Rôle : Administrateur — Extraction de la valeur du stock perdu</p>
+    </div>
+
+    <p class="text-xs text-gray-400 mb-6 font-medium">Ce rapport comptabilise la valeur financière des médicaments dont le statut a été basculé en <span class="font-mono bg-red-100 text-red-700 px-1 rounded font-bold">Status::EXPIRED</span>.</p>
+    
+    <div class="p-8 bg-red-50/60 rounded-2xl border border-red-100 shadow-inner mb-4">
+        <span class="block text-xs font-black text-red-600 uppercase tracking-widest">Valeur Totale du Gâchis</span>
+        <span class="text-4xl font-black text-red-700 mt-2 block tracking-tight font-mono">
+            <?= number_format($totalLoss, 2) ?> <span class="text-lg">DH</span>
+        </span>
+    </div>
+
+    <div class="text-[11px] text-gray-400 flex items-center justify-center gap-1 mt-6">
+        <span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span>
+        Données synchronisées en temps réel avec la table rapports_perte.
+    </div>
+</div>
+</file>
+
+<file path="templates/dashboard/sortie.php">
+<?php
+/** @var array $products */
+/** @var array|null $suggestedBatch */
+/** @var int|null $selectedProductId */
+/** @var string|null $error */
+/** @var string|null $success */
+?>
+<div class="max-w-2xl mx-auto bg-gradient-to-br from-white to-slate-50/60 p-8 rounded-3xl border border-slate-200/80 shadow-md relative overflow-hidden animate-fade-in">
+    
+    <div class="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="mb-8 border-b border-slate-100 pb-5 relative z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-xl text-blue-600 shadow-2xs">
+                
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-slate-900 tracking-tight">
+                    Sorties de Stock Intelligentes (FEFO)
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5 font-medium">
+                    Rôle : Préparateur / Pharmacien — Déstockage guidé selon la méthode <span class="text-emerald-600 font-bold">FEFO</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <?php if (!empty($error)): ?>
+        <div class="mb-6 p-4 bg-rose-50 border-l-4 border-rose-600 rounded-xl text-rose-900 text-xs font-black flex items-center gap-2.5 shadow-2xs">
+            <span></span> <span><?= htmlspecialchars($error) ?></span>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($success)): ?>
+        <div class="mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-600 rounded-xl text-emerald-900 text-xs font-black flex items-center gap-2.5 shadow-2xs">
+            <span></span> <span><?= htmlspecialchars($success) ?></span>
+        </div>
+    <?php endif; ?>
+
+    <form method="GET" action="index.php" class="mb-6 p-5 bg-slate-100/80 border border-slate-200/60 rounded-2xl relative z-10 shadow-2xs">
+        <input type="hidden" name="action" value="dispense">
+        
+        <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700 mb-2">1. Sélectionner le médicament demandé :</label>
+        <div class="flex flex-col sm:flex-row gap-2.5">
+            <div class="relative flex-grow">
+                <select name="prod_id" class="w-full p-3.5 pr-10 border border-slate-200 rounded-xl bg-white text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all appearance-none cursor-pointer" required>
+                    <option value="" class="text-slate-400 font-medium">-- Choisir un produit --</option>
+                    <?php foreach ($products as $p): ?>
+                        <option value="<?= $p['id'] ?>" <?= ($selectedProductId == $p['id']) ? 'selected' : '' ?> class="text-slate-900 font-bold">
+                            <?= htmlspecialchars($p['nom']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400 text-xs">
+                    ▼
+                </div>
+            </div>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-6 py-3.5 sm:py-0 rounded-xl shadow-sm hover:shadow transition-all uppercase tracking-widest active:scale-[0.98] shrink-0 cursor-pointer">
+                Analyser le Stock 🔍
+            </button>
+        </div>
+    </form>
+
+    <?php if ($selectedProductId): ?>
+        <?php if ($suggestedBatch): ?>
+            
+            <div class="p-5 bg-gradient-to-br from-emerald-50/80 via-emerald-50/20 to-white border border-emerald-200 rounded-2xl text-sm mb-6 shadow-2xs relative overflow-hidden animate-fade-in">
+                <div class="absolute -top-10 -right-10 text-emerald-500/5 font-black text-8xl pointer-events-none select-none font-mono">FEFO</div>
+                
+                <div class="flex items-center gap-2 font-black text-emerald-900 text-xs tracking-wider uppercase mb-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> MOTEUR FEFO DE VISIBILITÉ ACTIVÉ
+                </div>
+                <p class="text-xs text-slate-600 font-medium leading-relaxed">
+                    Le système applique les règles de traçabilité. Veuillez prélever dans les rayons le lot suivant :
+                </p>
+                
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-white/90 border border-emerald-100 p-4 rounded-xl shadow-3xs font-mono">
+                    <div class="flex items-center justify-between sm:justify-start gap-2 text-slate-500">
+                        <span>Numéro de Lot :</span> 
+                        <span class="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/40 font-sans text-xs"><?= htmlspecialchars($suggestedBatch['numero_lot']) ?></span>
+                    </div>
+                    <div class="flex items-center justify-between sm:justify-end gap-2 text-slate-500">
+                        <span>Péremption (DLU) :</span> 
+                        <span class="font-black text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded border border-rose-100 text-xs"><?= $suggestedBatch['date_peremption'] ?></span>
+                    </div>
+                    <div class="col-span-1 sm:col-span-2 mt-2 pt-2.5 border-t border-dashed border-emerald-200/70 text-slate-700 font-sans flex items-center justify-between">
+                        <span class="text-xs font-medium">Stock physique disponible sur ce lot :</span>
+                        <span class="font-black text-emerald-700 text-sm bg-emerald-100/50 px-2.5 py-0.5 rounded-lg border border-emerald-200/40"><?= $suggestedBatch['quantite'] ?> unités</span>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="index.php?action=dispense" class="space-y-5 relative z-10 animate-fade-in">
+                <input type="hidden" name="lot_id" value="<?= $suggestedBatch['id'] ?>">
+                
+                <div class="space-y-1.5">
+                    <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700">Quantité à vendre / dispenser :</label>
+                    <input type="number" name="qty" min="1" max="<?= $suggestedBatch['quantite'] ?>" placeholder="Ex: 5" class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-black text-slate-900 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all" required>
+                    <span class="text-[10px] text-slate-400 font-medium block mt-1 flex items-center gap-1">
+                        La quantité maximale autorisée pour cette transaction est bridée à <strong class="text-slate-700 font-bold"><?= $suggestedBatch['quantite'] ?> u.</strong>
+                    </span>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-4 px-6 rounded-xl shadow-md hover:shadow-lg hover:shadow-emerald-600/10 transition-all uppercase tracking-widest active:scale-[0.99] cursor-pointer">
+                        Confirmer le déstockage automatique 
+                    </button>
+                </div>
+            </form>
+
+        <?php else: ?>
+            <div class="p-6 bg-rose-50 border border-rose-200 text-rose-900 rounded-2xl text-center shadow-2xs relative overflow-hidden animate-fade-in">
+                <div class="w-12 h-12 bg-rose-100 border border-rose-200 rounded-full flex items-center justify-center text-xl mx-auto mb-3">
+                    
+                </div>
+                <h4 class="text-sm font-black uppercase tracking-wide">Rupture de stock critique !</h4>
+                <p class="text-xs text-rose-700 font-medium mt-1">Aucun lot actif ou disponible n'a été trouvé dans la base pour ce produit.</p>
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
+
+</div>
+</file>
+
+<file path="templates/layout_footer.php">
+</main>
+</body>
+</html>
+</file>
+
+<file path="templates/layout_header.php">
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>PharmaFEFO Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased">
+    <nav class="bg-indigo-700 text-white shadow-md p-4 mb-6">
+        <div class="container mx-auto flex justify-between items-center font-bold">
+            <a href="index.php?action=dashboard" class="text-xl tracking-wider">💊 PharmaFEFO</a>
+            <div class="space-x-6 text-sm font-medium">
+                <a href="index.php?action=dashboard" class="hover:text-indigo-200">📊 Dashboard</a>
+                <a href="index.php?action=add-batch" class="hover:text-indigo-200">📥 Entrée Lot</a>
+                <a href="index.php?action=dispense" class="hover:text-indigo-200">📦 Sortie FEFO</a>
+                <a href="index.php?action=report" class="hover:text-indigo-200">💰 Rapport Financier</a>
+            </div>
+        </div>
+    </nav>
+    <main class="container mx-auto p-4">
+</file>
+
+<file path="templates/layout/base.php">
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaFEFO — Moteur de Stock Virtuel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        medical: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+</head>
+
+<body class="bg-slate-50 text-slate-900 antialiased font-sans min-h-screen flex">
+
+    <!-- Overlay mobile -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <aside id="sidebar" class="w-72 bg-gradient-to-b from-medical-950 via-slate-900 to-slate-950 text-slate-400 fixed h-full top-0 left-0 z-50 flex flex-col justify-between border-r border-slate-800/80 shadow-2xl -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <!-- Logo -->
+            <div class="p-6 border-b border-slate-800/60 flex items-center gap-3 bg-medical-950/50">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-medical-500 to-medical-700 border border-medical-400/30 flex items-center justify-center shadow-lg shadow-medical-500/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-white">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black text-white tracking-tight leading-none">Pharma<span class="text-medical-400 font-mono">FEFO</span></h1>
+                    <span class="text-[10px] text-medical-400/80 font-bold tracking-widest uppercase">Moteur de Stock</span>
+                </div>
+            </div>
+
+            <?php if (isset($_SESSION['user_nom'])): ?>
+                <div class="m-4 p-4 rounded-2xl bg-slate-800/50 border border-slate-700/40 flex items-center gap-3 backdrop-blur-sm">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white font-black text-xs flex items-center justify-center uppercase shadow-md shadow-emerald-500/20 ring-2 ring-emerald-400/20">
+                        <?= mb_substr($_SESSION['user_nom'], 0, 2) ?>
+                    </div>
+                    <div class="overflow-hidden flex-1 min-w-0">
+                        <p class="font-semibold text-sm text-white truncate"><?= htmlspecialchars($_SESSION['user_nom']) ?></p>
+                        <span class="text-[9px] px-2 py-0.5 rounded-md font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-400/25 uppercase tracking-wider inline-block mt-1 font-bold">
+                            <?= htmlspecialchars($_SESSION['user_role']) ?>
+                        </span>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <nav class="px-3 py-2 space-y-1 flex-1">
+                <span class="px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-3 mt-2">Navigation Principale</span>
+
+                <a href="index.php?action=dashboard" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-medical-500/10 hover:text-white group text-slate-300">
+                    <span class="w-9 h-9 rounded-lg bg-slate-800/80 group-hover:bg-medical-500/20 flex items-center justify-center transition-all duration-200 group-hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-medical-400">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                        </svg>
+                    </span>
+                    Tableau de Bord
+                </a>
+
+                <?php if (isset($_SESSION['user_role']) && in_array($_SESSION['user_role'], ['preparateur', 'pharmacien', 'admin'])): ?>
+                    <a href="index.php?action=add-batch" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-emerald-500/10 hover:text-white group text-slate-300">
+                        <span class="w-9 h-9 rounded-lg bg-slate-800/80 group-hover:bg-emerald-500/20 flex items-center justify-center transition-all duration-200 group-hover:scale-105">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-emerald-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                        </span>
+                        Entrée de Lot
+                    </a>
+                    <a href="index.php?action=dispense" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-orange-500/10 hover:text-white group text-slate-300">
+                        <span class="w-9 h-9 rounded-lg bg-slate-800/80 group-hover:bg-orange-500/20 flex items-center justify-center transition-all duration-200 group-hover:scale-105">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-orange-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                            </svg>
+                        </span>
+                        Sortie Intelligente
+                    </a>
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                    <span class="px-4 pt-5 text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-3">Privilèges Admin</span>
+                    <a href="index.php?action=users" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-purple-500/10 text-purple-300 hover:text-purple-200 group border border-transparent hover:border-purple-500/20">
+                        <span class="w-9 h-9 rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 flex items-center justify-center transition-all duration-200 group-hover:scale-105">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-purple-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                            </svg>
+                        </span>
+                        Gestion Équipe
+                    </a>
+                    <a href="index.php?action=report" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-purple-500/10 text-purple-300 hover:text-purple-200 group border border-transparent hover:border-purple-500/20">
+                        <span class="w-9 h-9 rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 flex items-center justify-center transition-all duration-200 group-hover:scale-105">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-purple-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                        </span>
+                        Rapport Financier
+                    </a>
+
+                   
+
+                <?php endif; ?>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-slate-800/60 bg-slate-950/40 backdrop-blur-sm">
+            <a href="index.php?action=logout" class="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white text-xs font-black uppercase tracking-wider transition-all duration-200 border border-red-500/25 shadow-sm hover:shadow-red-500/25">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                </svg>
+                Déconnexion
+            </a>
+        </div>
+    </aside>
+
+    <div class="flex-grow lg:pl-72 min-h-screen flex flex-col w-full">
+
+        <header class="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 px-4 sm:px-8 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-4">
+                <!-- Bouton menu mobile -->
+                <button type="button" onclick="toggleSidebar()" class="lg:hidden w-10 h-10 rounded-xl bg-medical-50 border border-medical-200 flex items-center justify-center text-medical-600 hover:bg-medical-100 transition-colors" aria-label="Ouvrir le menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                </button>
+                <div class="flex items-center gap-2.5">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-xs text-slate-500 font-medium hidden sm:inline">Base de données en temps réel connectée via PDO</span>
+                    <span class="text-xs text-slate-500 font-medium sm:hidden">PDO connecté</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-medical-50 border border-medical-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-medical-500">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                    </svg>
+                    <span class="text-xs text-medical-700 font-semibold font-mono"><?= date('d M Y') ?></span>
+                </div>
+                <div class="sm:hidden text-xs text-slate-500 font-bold font-mono">
+                    <?= date('d/m/Y') ?>
+                </div>
+            </div>
+        </header>
+
+        <main class="p-4 sm:p-6 lg:p-8 flex-grow max-w-[1400px] w-full mx-auto main-content">
+            <?= $content ?? '<div class="flex flex-col items-center justify-center py-20 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mb-4 text-slate-300"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg><p class="font-medium">Aucun contenu disponible.</p></div>' ?>
+        </main>
+
+        <footer class="px-4 sm:px-8 py-5 bg-white border-t border-slate-200/80">
+            <div class="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400 font-medium">
+                <p>&copy; 2026 <span class="text-medical-700 font-bold">PharmaFEFO</span> — Algorithme FEFO Strict homologué pour l'évaluation [2023] Web & Mobile.</p>
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-semibold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> FEFO
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-medical-50 text-medical-600 border border-medical-200 text-[10px] font-semibold">
+                        v2026
+                    </span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+    </script>
+
+</body>
+
+
+</html>
+</file>
+
+<file path="src/Repository/StockBatchRepository.php">
+<?php
+// src/Repository/StockBatchRepository.php
+
+require_once __DIR__ . '/../../config/database.php';
+
+class StockBatchRepository {
+    private PDO $db;
+
+    public function __construct() {
+        $this->db = Database::getConnection();
+    }
+
+    public function find($id) {
+        $stmt = $this->db->prepare("SELECT * FROM lot_stocks WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    }
+
+    public function updateQuantite($id, $newQty) {
+        $stmt = $this->db->prepare("UPDATE lot_stocks SET quantite = ? WHERE id = ?");
+        return $stmt->execute([$newQty, $id]);
+    }
+
+    public function getDashboardLots($filter = null) {
+        $sql = "SELECT l.*, p.nom, p.reference FROM lot_stocks l 
+                JOIN produits p ON l.produit_id = p.id";
+        
+        if ($filter === 'critical') {
+            $sql .= " WHERE l.date_peremption <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)";
+        } elseif ($filter === 'warning') {
+            $sql .= " WHERE l.date_peremption <= DATE_ADD(CURDATE(), INTERVAL 90 DAY) AND l.date_peremption > DATE_ADD(CURDATE(), INTERVAL 30 DAY)";
+        }
+        
+        $sql .= " ORDER BY l.date_peremption ASC";
+        return $this->db->query($sql)->fetchAll();
+    }
+
+    public function getAllProducts() {
+        return $this->db->query("SELECT * FROM produits ORDER BY nom ASC")->fetchAll();
+    }
+
+    public function saveInputBatch($productId, $lotNumber, $quantity, $expiryDateStr) {
+        $stmt = $this->db->prepare("
+            INSERT INTO lot_stocks (produit_id, numero_lot, quantite, date_peremption, statut) 
+            VALUES (?, ?, ?, ?, 'OK')
+        ");
+        return $stmt->execute([$productId, $lotNumber, $quantity, $expiryDateStr]);
+    }
+
+    public function getFefoBatchForProduct($productId) {
+        $stmt = $this->db->prepare("
+            SELECT * FROM lot_stocks 
+            WHERE produit_id = ? AND quantite > 0 AND date_peremption >= CURDATE()
+            ORDER BY date_peremption ASC LIMIT 1
+        ");
+        $stmt->execute([$productId]);
+        return $stmt->fetch();
+    }
+
+    public function dispenseBatch($batchId, $qty) {
+        $stmt = $this->db->prepare("UPDATE lot_stocks SET quantite = quantite - ? WHERE id = ? AND quantite >= ?");
+        return $stmt->execute([$qty, $batchId, $qty]);
+    }
+
+    public function markBatchAsExpired($batchId) {
+        $stmt = $this->db->prepare("UPDATE lot_stocks SET statut = 'EXPIRED', quantite = 0 WHERE id = ?");
+        return $stmt->execute([$batchId]);
+    }
+
+    public function getFinancialLossTotal() {
+        return $this->db->query("
+            SELECT SUM(l.quantite * p.prix) as total 
+            FROM lot_stocks l
+            JOIN produits p ON l.produit_id = p.id
+            WHERE l.date_peremption < CURDATE() OR l.statut = 'EXPIRED'
+        ")->fetch()['total'] ?? 0.00;
+    }
+}
+</file>
+
+<file path="README.md">
+# PharmaFEFO - Application de Gestion Intelligente des Stocks Pharmaceutiques
+
+Projet éducatif PHP OOP permettant la gestion des stocks de médicaments selon la méthode **FEFO (First Expired, First Out)** afin de réduire les pertes financières liées aux produits périmés et garantir la sécurité sanitaire.
+
+## Stack Technique
+
+* **PHP 8** (Programmation Orientée Objet)
+* **MySQL** (Base de données)
+* **PDO** (Connexion sécurisée)
+* **Tailwind CSS** (Interface utilisateur via CDN)
+* **PHP Sessions** (Authentification)
+* **Architecture MVC**
+
+## Structure du Projet
+
+```text
+pharmafefo/
+├── config/
+│   ├── database.php
+├── docs/
+│   ├── shema.sql            # structure de data base
+├── public/
+│   ├── css/                  # Feuilles de style
+│   ├── js/                   # Scripts JavaScript
+│   └── index.php             # Contrôleur frontal / Routing
+├── src/
+│   ├── Controller/
+│   │   ├── AuthController.php
+│   │   ├── DashboardController.php
+│   │   ├── StockController.php
+│ 
+│   ├── Entity/
+│   │   ├── User.php
+│   │   ├── Produit.php
+│   │   ├── StockBatch.php
+│   │   ├── ReturnProduct.php
+│   │   └── StockMovement.php
+│   │   └── Alert.php
+│   ├── Enum/
+│   │   └── MouvementType.php
+│   ├── Middleware/
+│   │   └── AuthMiddleware.php
+│   └── Repository/
+│       ├── UserRepository.php
+│       ├── ProductRepository.php
+│       ├── MouvementRepository.php
+│       ├── StockBatchRepository.php
+├── templates/
+│   ├── dashboard/
+│   │   └── add_batch.php
+│   │   └── index.php
+│   │   └── manage_users.php
+│   │   └── notifications.php
+│   │   └── report.php
+│   │   └── sortie.php
+
+│   ├── alerts/
+│   │   ├── index.php
+│   ├── auth/
+│   │   └── login.php
+│   └── layout/
+│       ├── base.php
+│       └── layout_header.php
+└── README.md
+```
+
+## Diagramme de Classe
+
+![class-phr.png](class-phr.png)
+## Diagramme de Cas d’Utilisation
+
+![use case pharmacie.jpg](<use case pharmacie.jpg>)
+
+## Diagramme ERD
+
+![ pharmacie.png](<ERD pharmacie.png>)
+---
+
+## Contexte du Projet
+
+Les pharmacies et dépôts médicaux gèrent quotidiennement des milliers de références de médicaments.
+
+Le principal problème réside dans la gestion des dates de péremption. Une mauvaise visibilité des lots entraîne :
+
+* Des pertes financières importantes dues aux produits périmés.
+* Des risques sanitaires liés à l'utilisation de médicaments expirés.
+* Des ruptures de stock causées par une mauvaise anticipation.
+
+L'application **PharmaFEFO** apporte une solution grâce à la méthode **FEFO (First Expired, First Out)**.
+
+Le système :
+
+* Priorise automatiquement les lots proches de la péremption.
+* Génère des alertes visuelles selon le niveau de criticité.
+* Facilite le retour fournisseur avant expiration.
+* Réduit les pertes et améliore la sécurité des patients.
+
+---
+
+## Installation
+
+### 1. Prérequis
+
+* PHP 8.0 ou supérieur
+* MySQL 5.7 ou supérieur
+* Apache / Nginx ou serveur PHP intégré
+
+### 2. Base de Données
+
+```bash
+mysql -u root -p < database.sql
+```
+
+
+
+### 4. Lancer le Serveur
+
+```bash
+cd public
+php -S localhost:8000
+```
+
+Accéder à l'application :
+
+```text
+http://localhost:8000
+```
+
+---
+
+## Comptes de Démonstration
+
+| Rôle           | Email                                                         | Mot de passe |
+| -------------- | ------------------------------------------------------------- | ------------ |
+| Administrateur | [admin@pharmafefo.com](mailto:admin@pharma.com)           | admin123     |
+| Pharmacien     | [pharmacien@pharmafefo.com](mailto:pharmacien@pharma.com) | pharma123    |
+| Gestionnaire   | [stock@pharmafefo.com](mailto:stock@pharma.com)           | stock123     |
+
+---
+
+## Rôles et Permissions
+
+### Gestionnaire de Stock
+
+* Réceptionner les commandes.
+* Enregistrer les entrées de stock.
+* Scanner les lots.
+* Effectuer les sorties de stock.
+
+### Pharmacien
+
+* Consulter les alertes de péremption.
+* Valider les inventaires.
+* Gérer les retours fournisseurs.
+* Déclarer les produits périmés.
+
+### Administrateur
+
+* Gérer les utilisateurs.
+* Configurer les seuils d'alerte.
+* Consulter les rapports financiers.
+* Administrer la plateforme.
+
+---
+
+## Fonctionnalités
+
+### Gestion des Entrées
+
+* Ajout de nouveaux médicaments.
+* Enregistrement du numéro de lot.
+* Enregistrement de la date de péremption.
+* Validation automatique des dates.
+
+### Alertes de Péremption
+
+* Vert : Plus de 6 mois.
+* Orange : Moins de 90 jours.
+* Rouge : Moins de 30 jours.
+
+### Gestion FEFO
+
+* Sélection automatique du lot à sortir.
+* Priorité au lot ayant la date de péremption la plus proche.
+* Réduction automatique du stock.
+
+### Gestion des Produits Périmés
+
+* Déclaration des lots expirés.
+* Retrait du stock disponible.
+* Historique des destructions.
+
+### Rapports
+
+* Rapport mensuel des pertes.
+* Valeur financière des produits périmés.
+* Statistiques des retours fournisseurs.
+
+---
+
+## Architecture
+
+### Entités Principales
+
+#### Utilisateur
+
+* id
+* nom
+* email
+* motDePasse
+* role
+
+#### Produit
+
+* id
+* nom
+* codeProduit
+* description
+
+#### Lot
+
+* id
+* numeroLot
+* quantite
+* datePeremption
+* statut
+
+#### MouvementStock
+
+* id
+* type (ENTREE / SORTIE)
+* quantite
+* dateMouvement
+
+---
+
+## Relations
+
+* Un Produit possède plusieurs Lots.
+* Un Lot appartient à un seul Produit.
+* Un Produit possède plusieurs Mouvements de Stock.
+* Un Utilisateur effectue plusieurs opérations.
+* Un Lot peut être marqué comme Expiré.
+
+---
+
+## Règles SQL
+
+* Toutes les requêtes SQL sont dans les Repository.
+* Aucun SQL dans les Controllers.
+* Aucun SQL dans les Views.
+* Les Entités représentent uniquement les objets métier.
+
+---
+
+## Sécurité
+
+* Authentification par session PHP.
+* Hashage des mots de passe avec bcrypt.
+* Requêtes préparées PDO.
+* Protection contre les injections SQL.
+* Protection XSS avec `htmlspecialchars()`.
+* Contrôle d'accès basé sur les rôles.
+
+---
+
+## Principes SOLID Respectés
+
+### SRP (Single Responsibility Principle)
+
+Chaque classe possède une seule responsabilité.
+
+### OCP (Open Closed Principle)
+
+Le système est extensible sans modification du code existant.
+
+### LSP (Liskov Substitution Principle)
+
+Les classes enfants peuvent remplacer leurs classes parentes.
+
+### ISP (Interface Segregation Principle)
+
+Interfaces spécialisées selon les besoins.
+
+### DIP (Dependency Inversion Principle)
+
+Dépendance vers des abstractions plutôt que des implémentations.
+
+---
+
+## Auteur
+
+Projet réalisé dans le cadre de la formation Développeur Web & Web Mobile - Simplon.
+</file>
+
+</files>

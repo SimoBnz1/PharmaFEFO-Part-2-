@@ -66,14 +66,14 @@ pharmafefo/
 
 ## Diagramme de Classe
 
-![alt text](class-phr.png)
+![class-phr.png](class-phr.png)
 ## Diagramme de Cas d’Utilisation
 
-![alt text](<use case pharmacie.jpg>)
+![use case pharmacie.jpg](<use case pharmacie.jpg>)
 
 ## Diagramme ERD
 
-![alt text](<ERD pharmacie.png>)
+![ pharmacie.png](<ERD pharmacie.png>)
 ---
 
 ## Contexte du Projet

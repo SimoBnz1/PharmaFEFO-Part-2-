@@ -92,7 +92,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
                         </span>
-                        Entrée de Lot
+                        <button onclick="window.location.href='index.php?route=add-batch'">Entrée de Lot </button>
+                       
                     </a>
                     <a href="index.php?action=dispense" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-orange-500/10 hover:text-white group text-slate-300">
                         <span class="w-9 h-9 rounded-lg bg-slate-800/80 group-hover:bg-orange-500/20 flex items-center justify-center transition-all duration-200 group-hover:scale-105">
@@ -200,5 +201,6 @@
     </script>
 
 </body>
+
 
 </html>

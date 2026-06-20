@@ -1,5 +1,5 @@
 <?php
-
+// src/Repository/UserRepository.php
 require_once __DIR__ . '/../../config/database.php';
 
 class UserRepository {
@@ -9,24 +9,20 @@ class UserRepository {
         $this->db = Database::getConnection();
     }
 
-    
-    public function findUserByEmail($email) {
+    // 🚀 صلحنا البحث هنا باش يقلب بالـ email لي كاين ف الداتا بيز ديالك
+    public function findByUsername(string $name) {
         $stmt = $this->db->prepare("SELECT * FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        $res = $stmt->fetch();
-        return $res ? $res : null;
+        $stmt->execute([$name]);
+        return $stmt->fetch() ?: null;
     }
 
-   
+    public function findById(int $id) {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch() ?: null;
+    }
+
     public function getAllUsers() {
-        return $this->db->query("SELECT id, nom, prenom, email, role FROM users ORDER BY id DESC")->fetchAll();
-    }
-
-    public function createUser($nom, $prenom, $email, $hashedPassword, $role) {
-        $stmt = $this->db->prepare("
-            INSERT INTO users (nom, prenom, email, password, role) 
-            VALUES (?, ?, ?, ?, ?)
-        ");
-        return $stmt->execute([$nom, $prenom, $email, $hashedPassword, $role]);
+        return $this->db->query("SELECT id, email, role FROM users ORDER BY email ASC")->fetchAll();
     }
 }
