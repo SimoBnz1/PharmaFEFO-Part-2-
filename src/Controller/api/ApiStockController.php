@@ -85,7 +85,7 @@ class ApiStockController
         $data = json_decode(file_get_contents("php://input"), true);
 
         $repo = new StockBatchRepository(Database::getConnection());
-        $result = $repo->saveInputBatch($data['produit_id'], $data['numero_lot'], $data['quantite'], $data['date_peremption'], $data['statut']);
+        $result = $repo->saveInputBatch($data['produit_id'], $data['numero_lot'], $data['quantite'], $data['date_peremption']);
          echo json_encode([
             "success" => $result
         ]);

@@ -1,293 +1,262 @@
-# PharmaFEFO - Application de Gestion Intelligente des Stocks Pharmaceutiques
+# 💊 PharmaFEFO - Application de Gestion de Stock Pharmaceutique
 
-Projet éducatif PHP OOP permettant la gestion des stocks de médicaments selon la méthode **FEFO (First Expired, First Out)** afin de réduire les pertes financières liées aux produits périmés et garantir la sécurité sanitaire.
 
-## Stack Technique
+## 📌 Description du projet
 
-* **PHP 8** (Programmation Orientée Objet)
-* **MySQL** (Base de données)
-* **PDO** (Connexion sécurisée)
-* **Tailwind CSS** (Interface utilisateur via CDN)
-* **PHP Sessions** (Authentification)
-* **Architecture MVC**
+**PharmaFEFO** est une application web de gestion intelligente des stocks pharmaceutiques basée sur la méthode **FEFO (First Expired, First Out)**.
 
-## Structure du Projet
+L'objectif principal est d'aider les professionnels de pharmacie à gérer efficacement leurs médicaments, réduire les pertes liées aux produits périmés et automatiser la sortie des lots selon leur date d'expiration.
 
-```text
+Cette deuxième partie transforme l'application en une architecture moderne **API-Ready et asynchrone**, permettant une interaction dynamique avec l'utilisateur sans rechargement des pages.
+
+---
+
+# 🎯 Objectifs du projet
+
+- Gestion des produits et des lots pharmaceutiques.
+- Suivi des dates de péremption.
+- Application de la méthode FEFO pour les sorties de stock.
+- Communication asynchrone avec Fetch API.
+- Exposition d'une API REST sécurisée.
+- Gestion des rôles et permissions.
+- Séparation claire entre Web Controllers et API Controllers.
+
+---
+
+# 🚀 Fonctionnalités principales
+
+## 📦 Gestion des entrées de stock
+
+- Ajout d'un nouveau lot via formulaire asynchrone.
+- Envoi des données avec JavaScript Fetch API.
+- Confirmation instantanée sans rechargement.
+- Contrôle d'accès pour le rôle **PREPARATEUR**.
+
+---
+
+## 📊 Dashboard dynamique
+
+- Affichage des lots disponibles.
+- Filtrage instantané :
+  - Tous les lots
+  - Alertes rouges (produits proches de la péremption)
+
+- Chargement des données via API JSON.
+- Mise à jour dynamique du tableau avec JavaScript.
+
+---
+
+## 🔄 Sortie intelligente FEFO
+
+- Bouton "Délivrer 1 boîte".
+- Sélection automatique du lot qui expire le plus tôt.
+- Décrémentation automatique de la quantité.
+- Mise à jour instantanée de l'interface.
+
+---
+
+## ⚠️ Gestion des pertes
+
+- Marquage des lots expirés.
+- Passage automatique du statut à `EXPIRED`.
+- Mise à jour dynamique de la quantité.
+- Rapport financier accessible uniquement par l'administrateur.
+
+---
+
+# 🏗️ Architecture du projet
+
+Le projet suit une architecture MVC améliorée :
+
+```
 pharmafefo/
+│
 ├── config/
 │   ├── database.php
-├── docs/
-│   ├── shema.sql            # structure de data base
+│   └── environment.php
+│
 ├── public/
-│   ├── css/                  # Feuilles de style
-│   ├── js/                   # Scripts JavaScript
-│   └── index.php             # Contrôleur frontal / Routing
+│   ├── css/
+│   ├── js/
+│   │   ├── app.js
+│   │   └── dashboard.js
+│   └── index.php
+│
 ├── src/
 │   ├── Controller/
-│   │   ├── AuthController.php
-│   │   ├── DashboardController.php
-│   │   ├── StockController.php
-│ 
+│   │   ├── Web/
+│   │   └── Api/
+│   │
 │   ├── Entity/
-│   │   ├── User.php
-│   │   ├── Produit.php
-│   │   ├── StockBatch.php
-│   │   ├── ReturnProduct.php
-│   │   └── StockMovement.php
-│   │   └── Alert.php
+│   │
 │   ├── Enum/
-│   │   └── MouvementType.php
-│   ├── Middleware/
-│   │   └── AuthMiddleware.php
+│   │
+│   ├── Service/
+│   │   ├── AuthService.php
+│   │   └── StockService.php
+│   │
 │   └── Repository/
-│       ├── UserRepository.php
-│       ├── ProductRepository.php
-│       ├── MouvementRepository.php
-│       ├── StockBatchRepository.php
-├── templates/
-│   ├── dashboard/
-│   │   └── add_batch.php
-│   │   └── index.php
-│   │   └── manage_users.php
-│   │   └── notifications.php
-│   │   └── report.php
-│   │   └── sortie.php
-
-│   ├── alerts/
-│   │   ├── index.php
-│   ├── auth/
-│   │   └── login.php
-│   └── layout/
-│       ├── base.php
-│       └── layout_header.php
-└── README.md
+│
+└── templates/
 ```
 
-## Diagramme de Classe
-
-![class-phr.png](class-phr.png)
-## Diagramme de Cas d’Utilisation
-
-![use case pharmacie.jpg](<use case pharmacie.jpg>)
-
-## Diagramme ERD
-
-![ pharmacie.png](<ERD pharmacie.png>)
 ---
 
-## Contexte du Projet
+# 🛠️ Technologies utilisées
 
-Les pharmacies et dépôts médicaux gèrent quotidiennement des milliers de références de médicaments.
-
-Le principal problème réside dans la gestion des dates de péremption. Une mauvaise visibilité des lots entraîne :
-
-* Des pertes financières importantes dues aux produits périmés.
-* Des risques sanitaires liés à l'utilisation de médicaments expirés.
-* Des ruptures de stock causées par une mauvaise anticipation.
-
-L'application **PharmaFEFO** apporte une solution grâce à la méthode **FEFO (First Expired, First Out)**.
-
-Le système :
-
-* Priorise automatiquement les lots proches de la péremption.
-* Génère des alertes visuelles selon le niveau de criticité.
-* Facilite le retour fournisseur avant expiration.
-* Réduit les pertes et améliore la sécurité des patients.
+- **PHP 8.x** : Backend et logique métier.
+- **MySQL** : Gestion de la base de données.
+- **JavaScript ES6 (Fetch API)** : Requêtes asynchrones et manipulation du DOM.
+- **HTML5 / CSS3** : Interface utilisateur.
+- **Git & GitHub** : Gestion de versions.
 
 ---
 
-## Installation
+# 🔌 API Endpoints
 
-### 1. Prérequis
+## Ajouter un lot
 
-* PHP 8.0 ou supérieur
-* MySQL 5.7 ou supérieur
-* Apache / Nginx ou serveur PHP intégré
+```
+POST /stock/add
+```
 
-### 2. Base de Données
+Permet au préparateur d'ajouter un nouveau lot.
+
+---
+
+## Récupérer les lots
+
+```
+GET /api/v1/batches
+```
+
+Exemple :
+
+```
+GET /api/v1/batches?criteria=critical
+```
+
+Retourne les lots sous format JSON.
+
+---
+
+## Sortie FEFO
+
+```
+POST /api/v1/batches/checkout
+```
+
+Décrémente automatiquement le stock selon la règle FEFO.
+
+---
+
+## Expirer un lot
+
+```
+PATCH /api/v1/batches/{id}/expire
+```
+
+Change le statut du lot en :
+
+```
+EXPIRED
+```
+
+---
+
+# 🔐 Sécurité
+
+Le projet intègre :
+
+- Authentification utilisateur.
+- Gestion des rôles :
+  - ADMIN
+  - PHARMACIEN
+  - PREPARATEUR
+
+- Protection des routes selon les permissions.
+- Gestion sécurisée des erreurs selon l'environnement.
+
+---
+
+# ⚡ Installation en local
+
+## 1. Cloner le projet
 
 ```bash
-mysql -u root -p < database.sql
+git clone https://github.com/votre-compte/pharmafefo.git
 ```
 
-
-
-### 4. Lancer le Serveur
+## 2. Installer les dépendances
 
 ```bash
-cd public
-php -S localhost:8000
+composer install
 ```
 
-Accéder à l'application :
+## 3. Configurer la base de données
 
-```text
-http://localhost:8000
+Créer une base MySQL :
+
+```
+pharmafefo
+```
+
+Modifier les informations dans :
+
+```
+config/database.php
 ```
 
 ---
 
-## Comptes de Démonstration
+## 4. Lancer le serveur
 
-| Rôle           | Email                                                         | Mot de passe |
-| -------------- | ------------------------------------------------------------- | ------------ |
-| Administrateur | [admin@pharmafefo.com](mailto:admin@pharma.com)           | admin123     |
-| Pharmacien     | [pharmacien@pharmafefo.com](mailto:pharmacien@pharma.com) | pharma123    |
-| Gestionnaire   | [stock@pharmafefo.com](mailto:stock@pharma.com)           | stock123     |
+```bash
+php -S localhost:8000 -t public
+```
 
 ---
 
-## Rôles et Permissions
+# 🌱 Gestion Git
 
-### Gestionnaire de Stock
+Le workflow utilisé :
 
-* Réceptionner les commandes.
-* Enregistrer les entrées de stock.
-* Scanner les lots.
-* Effectuer les sorties de stock.
+```
+main
+ |
+ ├── feature-auth
+ |
+ ├── feature-api-stock
+ |
+ └── feature-dashboard
+```
 
-### Pharmacien
-
-* Consulter les alertes de péremption.
-* Valider les inventaires.
-* Gérer les retours fournisseurs.
-* Déclarer les produits périmés.
-
-### Administrateur
-
-* Gérer les utilisateurs.
-* Configurer les seuils d'alerte.
-* Consulter les rapports financiers.
-* Administrer la plateforme.
+La branche `main` contient uniquement une version stable et fonctionnelle.
 
 ---
 
-## Fonctionnalités
+# 📸 Démonstration
 
-### Gestion des Entrées
+Fonctionnalités démontrables :
 
-* Ajout de nouveaux médicaments.
-* Enregistrement du numéro de lot.
-* Enregistrement de la date de péremption.
-* Validation automatique des dates.
-
-### Alertes de Péremption
-
-* Vert : Plus de 6 mois.
-* Orange : Moins de 90 jours.
-* Rouge : Moins de 30 jours.
-
-### Gestion FEFO
-
-* Sélection automatique du lot à sortir.
-* Priorité au lot ayant la date de péremption la plus proche.
-* Réduction automatique du stock.
-
-### Gestion des Produits Périmés
-
-* Déclaration des lots expirés.
-* Retrait du stock disponible.
-* Historique des destructions.
-
-### Rapports
-
-* Rapport mensuel des pertes.
-* Valeur financière des produits périmés.
-* Statistiques des retours fournisseurs.
+✅ Connexion utilisateur  
+✅ Ajout d'un lot  
+✅ Dashboard dynamique  
+✅ Filtrage des alertes  
+✅ Sortie FEFO  
+✅ Gestion des produits expirés  
 
 ---
 
-## Architecture
+# 👨‍💻 Auteur
 
-### Entités Principales
+**BEN IZZA MOHAMED**  
+Développeur Web Full Stack
 
-#### Utilisateur
-
-* id
-* nom
-* email
-* motDePasse
-* role
-
-#### Produit
-
-* id
-* nom
-* codeProduit
-* description
-
-#### Lot
-
-* id
-* numeroLot
-* quantite
-* datePeremption
-* statut
-
-#### MouvementStock
-
-* id
-* type (ENTREE / SORTIE)
-* quantite
-* dateMouvement
+Projet réalisé dans le cadre de la formation **Développement Digital - Full Stack**.
 
 ---
 
-## Relations
+# 📄 Licence
 
-* Un Produit possède plusieurs Lots.
-* Un Lot appartient à un seul Produit.
-* Un Produit possède plusieurs Mouvements de Stock.
-* Un Utilisateur effectue plusieurs opérations.
-* Un Lot peut être marqué comme Expiré.
-
----
-
-## Règles SQL
-
-* Toutes les requêtes SQL sont dans les Repository.
-* Aucun SQL dans les Controllers.
-* Aucun SQL dans les Views.
-* Les Entités représentent uniquement les objets métier.
-
----
-
-## Sécurité
-
-* Authentification par session PHP.
-* Hashage des mots de passe avec bcrypt.
-* Requêtes préparées PDO.
-* Protection contre les injections SQL.
-* Protection XSS avec `htmlspecialchars()`.
-* Contrôle d'accès basé sur les rôles.
-
----
-
-## Principes SOLID Respectés
-
-### SRP (Single Responsibility Principle)
-
-Chaque classe possède une seule responsabilité.
-
-### OCP (Open Closed Principle)
-
-Le système est extensible sans modification du code existant.
-
-### LSP (Liskov Substitution Principle)
-
-Les classes enfants peuvent remplacer leurs classes parentes.
-
-### ISP (Interface Segregation Principle)
-
-Interfaces spécialisées selon les besoins.
-
-### DIP (Dependency Inversion Principle)
-
-Dépendance vers des abstractions plutôt que des implémentations.
-
----
-
-## Auteur
-
-Projet réalisé dans le cadre de la formation Développeur Web & Web Mobile - Simplon.
+Projet pédagogique réalisé à des fins d'apprentissage.

@@ -36,6 +36,10 @@ switch ($action) {
     case 'add-batch':
         $webStockController->store();
         break;
+    case 'api/add-batch':
+        
+        $apiStockController->storeBatch();
+        break;
 
 
     case 'api-lots':

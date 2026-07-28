@@ -1,15 +1,16 @@
 <?php
+
 /** @var array $products Zid had l-khit bch intelephense yfhamha direct */
 ?>
 <div class="max-w-2xl mx-auto bg-gradient-to-br from-white to-slate-50/60 p-8 rounded-3xl border border-slate-200/80 shadow-md relative overflow-hidden animate-fade-in">
-    
+
     <div class="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
     <div class="mb-8 border-b border-slate-100 pb-5 relative z-10">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl text-emerald-600 shadow-2xs">
-                
+
             </div>
             <div>
                 <h2 class="text-xl font-black text-slate-900 tracking-tight">
@@ -20,7 +21,7 @@
                 </p>
             </div>
         </div>
-        
+
         <div class="mt-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-wider border border-slate-200/40">
             <span>🛡️</span> Rôle requis : Préparateur / Pharmacien
         </div>
@@ -38,15 +39,15 @@
         </div>
     <?php endif; ?>
 
-    <form method="POST" id="FormAddBatch" action="index.php?action=add-batch" class="space-y-5 relative z-10">
-        
+    <form method="POST" id="FormAddBatch" class="space-y-5 relative z-10">
+
         <div class="space-y-1.5">
             <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700">Médicament Réceptionné :</label>
             <div class="relative">
-                
+
                 <input type="text" name="" id="produit_id">
                 <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400 text-xs">
-                    
+
                 </div>
             </div>
         </div>
@@ -67,15 +68,16 @@
             <label class="block text-[11px] font-black uppercase tracking-widest text-slate-700">Date de Péremption (DLU) :</label>
             <input type="date" name="date_peremption" id="date_peremption" class="w-full p-3.5 border border-slate-200 rounded-xl text-sm font-mono font-black text-slate-900 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all" required>
             <span class="text-[10px] text-slate-400 font-medium block mt-1 flex items-center gap-1">
-                 Le système validera uniquement si la date est supérieure ou égale à aujourd'hui.
+                Le système validera uniquement si la date est supérieure ou égale à aujourd'hui.
             </span>
         </div>
 
         <div class="pt-2">
-            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-4 px-6 rounded-xl shadow-md hover:shadow-lg hover:shadow-emerald-600/10 transition-all uppercase tracking-widest active:scale-[0.99] cursor-pointer">
-                Enregistrer 
+            <button  type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-4 px-6 rounded-xl shadow-md hover:shadow-lg hover:shadow-emerald-600/10 transition-all uppercase tracking-widest active:scale-[0.99] cursor-pointer">
+                Enregistrer
             </button>
         </div>
 
     </form>
+    <script src="/../PharmaFEFO-Part2/public/js/dashboard.js"></script>
 </div>

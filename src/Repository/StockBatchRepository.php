@@ -41,8 +41,8 @@ class StockBatchRepository {
 
     public function saveInputBatch($productId, $lotNumber, $quantity, $expiryDateStr) {
         $stmt = $this->db->prepare("
-            INSERT INTO lot_stocks (produit_id, numero_lot, quantite, date_peremption, statut) 
-            VALUES (?, ?, ?, ?, 'OK')
+            INSERT INTO lot_stocks (produit_id, numero_lot, quantite, date_peremption) 
+            VALUES (?, ?, ?, ?)
         ");
         return $stmt->execute([$productId, $lotNumber, $quantity, $expiryDateStr]);
     }

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+
 function loadDashboardLots(filter = '') {
     const tbody = document.getElementById('api-stock-table-body');
     if (!tbody) return; 
@@ -90,30 +91,47 @@ function dispenseBox(lotId) {
     .catch(error => alert("Erreur de connexion avec le serveur"));
 }
 
-document.getElementById("FormAddBatch")?.addEventListener("submit",function (e) {
+
+
+document.getElementById("FormAddBatch")?.addEventListener("submit", function (e) {
+    console.log("Formulaire soumis !");
     e.preventDefault();
 
-    let data={
+    let data = {
         produit_id: document.getElementById('produit_id').value,
         numero_lot: document.getElementById('numero_lot').value,
         quantite: document.getElementById('quantite').value,
         date_peremption: document.getElementById('date_peremption').value
     };
 
-    console.log(data);
-    fetch('/PharmaFEFO-Part2/public/index.php?action=add-batch',{
-        method:'POST',
-        headers:{
-            'Content-Type' : 'application/jason'
-        },
-        body:JSON.stringify(data)
-    })
-    .then(res=>res.json)
-    .then(res=>
-        alert('ajouter avec succes ')
-    )
-        
+    console.log("Données envoyées :", data);
 
-    
-    
-})
+    fetch('index.php?action=add-batch', { 
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Erreur HTTP " + res.status);
+        return res.json(); 
+    })
+    .then(response => {
+        console.log("Réponse du serveur :", response);
+        
+       
+        if (response.success) {
+            alert('Ajouté avec succès !');
+           
+            document.getElementById("FormAddBatch").reset();
+             if (typeof loadDashboardLots === 'function') loadDashboardLots();
+        } else {
+            alert('Échec de l\'ajout : ' + (response.message || 'Erreur inconnue'));
+        }
+    })
+    .catch(error => {
+        console.error("Erreur Fetch :", error);
+        alert('Erreur de connexion avec le serveur.');
+    });
+});
